@@ -82,6 +82,7 @@ WARNING_CODES = {
 # サンプルデータの読み込み
 DATA_FILE = os.path.join(APP_DIR, 'data', 'shelters.json')
 INSTRUCTIONS_FILE = os.path.join(APP_DIR, 'data', 'instructions.json')
+DISASTER_REPORTS_FILE = os.path.join(APP_DIR, 'data', 'disaster_reports.json')
 
 def load_json(path, default):
     """JSONファイルを読み込む（存在しない・壊れている場合は default を返す）"""
@@ -93,6 +94,7 @@ def load_json(path, default):
 
 shelters = load_json(DATA_FILE, [])
 instructions = load_json(INSTRUCTIONS_FILE, [])
+disaster_reports = load_json(DISASTER_REPORTS_FILE, [])
 
 def save_instructions():
     """指示ボードのデータをファイルに保存する"""
@@ -240,8 +242,40 @@ def get_weather_warnings():
 # トップページ：templates/index.html を返す（住民向け指示も表示する）
 @app.route('/')
 def index():
-    resident_notices = [i for i in instructions if i.get('target') == '住民']
+    resident_notices = sorted(
+        (i for i in instructions if i.get('target') == '住民'),
+        key=lambda instruction: instruction.get('updated_at', ''),
+        reverse=True
+    )
     return render_template('index.html', resident_notices=resident_notices)
+
+
+@app.route('/api/disaster_reports', methods=['POST'])
+def create_disaster_report():
+    """ホーム画面の通報フォームから災害状況を保存する"""
+    report = request.get_json(silent=True) or {}
+    disaster_type = str(report.get('disaster_type', '')).strip()
+    other_detail = str(report.get('other_detail', '')).strip()
+    location = str(report.get('location', '')).strip()
+    situation = str(report.get('situation', '')).strip()
+
+    if not disaster_type or not location or not situation:
+        return jsonify({'error': '災害の種類、位置情報、状況を入力してください'}), 400
+    if disaster_type == 'その他' and not other_detail:
+        return jsonify({'error': '災害の種類の詳細を入力してください'}), 400
+
+    saved_report = {
+        'timestamp': get_japan_time(),
+        'disaster_type': disaster_type,
+        'other_detail': other_detail,
+        'location': location,
+        'situation': situation
+    }
+    disaster_reports.append(saved_report)
+    with open(DISASTER_REPORTS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(disaster_reports, f, ensure_ascii=False, indent=2)
+
+    return jsonify({'message': '報告を受け付けました'})
 
 # ログインページ
 @app.route('/login', methods=['GET', 'POST'])

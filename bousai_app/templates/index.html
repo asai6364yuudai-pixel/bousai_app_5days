@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 
 {% block body_class %}home-page{% endblock %}
+{% block site_name %}防災アプリ{% endblock %}
+{% block language_control %}
+<label class="language-control" for="languageSelect">言語選択</label>
+<select id="languageSelect" class="language-select" aria-label="言語選択">
+    <option>日本語</option>
+    <option>English</option>
+</select>
+{% endblock %}
 
 {% block content %}
 <style>
@@ -51,6 +59,35 @@
         display: none;
     }
 
+    .home-page .site-header nav {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-left: auto;
+        color: #ffffff;
+        font-size: 14px;
+    }
+
+    .home-page .site-header nav a {
+        color: #ffffff;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .home-page .language-control {
+        margin-left: 4px;
+        white-space: nowrap;
+    }
+
+    .home-page .language-select {
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        border-radius: 4px;
+        padding: 5px 7px;
+        background: #ffffff;
+        color: #435466;
+        font: inherit;
+    }
+
     .home-page main {
         width: min(910px, calc(100% - 32px));
         margin: 32px auto 86px;
@@ -64,6 +101,33 @@
         border-radius: 17px;
         background: #ffffff;
         box-shadow: 0 5px 18px rgba(41, 66, 102, 0.08);
+    }
+
+    .home-page .home-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.85fr);
+        grid-template-areas:
+            "map report"
+            "weather report"
+            "notice report";
+        gap: 28px;
+        align-items: start;
+    }
+
+    .home-page .map-card {
+        grid-area: map;
+    }
+
+    .home-page .weather-card {
+        grid-area: weather;
+    }
+
+    .home-page .notice-card {
+        grid-area: notice;
+    }
+
+    .home-page .report-form-card {
+        grid-area: report;
     }
 
     .home-page h2 {
@@ -168,16 +232,229 @@
         font-weight: 700;
     }
 
-    @media (max-width: 640px) {
+    .home-page .report-form-card {
+        padding-bottom: 28px;
+    }
+
+    .home-page .report-intro {
+        margin: -7px 0 22px;
+        color: #607286;
+        font-size: 15px;
+    }
+
+    .home-page .report-form {
+        display: grid;
+        gap: 18px;
+    }
+
+    .home-page .report-field {
+        display: grid;
+        gap: 7px;
+    }
+
+    .home-page .report-field label {
+        color: #435466;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .home-page .report-field input,
+    .home-page .report-field select,
+    .home-page .report-field textarea {
+        box-sizing: border-box;
+        width: 100%;
+        border: 1px solid #b8c2ce;
+        border-radius: 7px;
+        padding: 13px 14px;
+        background: #ffffff;
+        color: #435466;
+        font: inherit;
+        font-size: 16px;
+    }
+
+    .home-page .report-field textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .home-page .location-row {
+        display: flex;
+        gap: 10px;
+    }
+
+    .home-page .location-row input {
+        flex: 1;
+    }
+
+    .home-page .location-button,
+    .home-page .report-submit {
+        min-height: 50px;
+        border: 0;
+        border-radius: 7px;
+        padding: 12px 20px;
+        font: inherit;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .home-page .location-button {
+        flex-shrink: 0;
+        background: #e4edf8;
+        color: var(--home-blue);
+    }
+
+    .home-page .report-submit {
+        width: min(260px, 100%);
+        margin: 3px auto 0;
+        background: var(--home-blue);
+        color: #ffffff;
+        font-size: 18px;
+    }
+
+    .home-page .report-message {
+        min-height: 24px;
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .home-page .report-message.success {
+        color: var(--home-green);
+    }
+
+    .home-page .report-message.error {
+        color: #c0392b;
+    }
+
+    .home-page .other-detail-field[hidden] {
+        display: none;
+    }
+
+    .home-page .notice-source {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin: -7px 0 18px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        background: #eaf2fb;
+        color: #435466;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .home-page .notice-list {
+        display: grid;
+        gap: 12px;
+        margin: 0;
+    }
+
+    .home-page .notice-item {
+        padding: 15px 16px;
+        border-left: 5px solid var(--home-blue);
+        border-radius: 7px;
+        background: #f7f8fa;
+    }
+
+    .home-page .notice-item-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .home-page .notice-content {
+        margin: 0;
+        color: #435466;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.6;
+    }
+
+    .home-page .notice-updated {
+        flex-shrink: 0;
+        color: #607286;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .home-page .notice-shelter,
+    .home-page .notice-status {
+        margin: 7px 0 0;
+        color: #607286;
+        font-size: 14px;
+    }
+
+    .home-page .notice-empty {
+        margin: 0;
+        color: #607286;
+        font-size: 15px;
+    }
+
+    @media (max-width: 767px) {
+        .home-page .site-header {
+            height: auto;
+            min-height: 70px;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-top: 14px;
+            padding-bottom: 14px;
+        }
+
+        .home-page .site-header h1 {
+            font-size: 21px;
+        }
+
+        .home-page .site-header nav {
+            width: 100%;
+            order: 3;
+            justify-content: flex-start;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 3px;
+            font-size: 12px;
+        }
+
+        .home-page .language-control {
+            margin-left: 0;
+        }
+
+        .home-page .home-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .home-page .map-card {
+            order: 1;
+        }
+
+        .home-page .weather-card {
+            order: 2;
+        }
+
+        .home-page .notice-card {
+            order: 3;
+        }
+
+        .home-page .report-form-card {
+            order: 4;
+        }
+
         .home-page main {
-            width: calc(100% - 24px);
-            margin-top: 20px;
+            width: 100%;
+            margin: 12px 0 40px;
         }
 
         .home-page .home-card {
-            margin-bottom: 22px;
-            padding: 20px 15px;
-            border-radius: 13px;
+            width: 100%;
+            margin-bottom: 12px;
+            padding: 18px 12px 20px;
+            border-right: 0;
+            border-left: 0;
+            border-radius: 0;
         }
 
         .home-page h2 {
@@ -191,14 +468,64 @@
         .home-page #shelterMap {
             height: 280px;
         }
+
+        .home-page .notice-item-header {
+            display: block;
+        }
+
+        .home-page .notice-updated {
+            display: block;
+            margin-top: 5px;
+        }
+
+        .home-page .location-row {
+            display: grid;
+        }
     }
 </style>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
+<div class="home-layout">
 <section class="home-card map-card">
     <h2><i class="fa-solid fa-location-dot section-icon" aria-hidden="true"></i>避難所マップ</h2>
     <div id="shelterMap"></div>
+</section>
+
+<section class="home-card report-form-card">
+    <h2><i class="fa-solid fa-triangle-exclamation section-icon" aria-hidden="true"></i>災害の情報を報告する</h2>
+    <p class="report-intro">身近で起きている災害の状況を入力してください。</p>
+    <form id="disasterReportForm" class="report-form">
+        <div class="report-field">
+            <label for="disasterType">災害の種類</label>
+            <select id="disasterType" name="disaster_type" required>
+                <option value="">災害の種類を選択してください</option>
+                <option value="地震">地震</option>
+                <option value="洪水・浸水">洪水・浸水</option>
+                <option value="土砂災害">土砂災害</option>
+                <option value="火災">火災</option>
+                <option value="強風・突風">強風・突風</option>
+                <option value="その他">その他</option>
+            </select>
+        </div>
+        <div id="otherDetailField" class="report-field other-detail-field" hidden>
+            <label for="otherDetail">災害の種類の詳細</label>
+            <input id="otherDetail" name="other_detail" type="text" placeholder="災害の種類を入力してください">
+        </div>
+        <div class="report-field">
+            <label for="reportLocation">位置情報</label>
+            <div class="location-row">
+                <input id="reportLocation" name="location" type="text" placeholder="住所や場所を入力してください" required>
+                <button id="getLocationButton" class="location-button" type="button"><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i> 現在地を取得</button>
+            </div>
+        </div>
+        <div class="report-field">
+            <label for="reportSituation">状況の説明</label>
+            <textarea id="reportSituation" name="situation" placeholder="被害の状況や周囲の様子を入力してください" required></textarea>
+        </div>
+        <button class="report-submit" type="submit"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> 報告を送信する</button>
+        <p id="reportMessage" class="report-message" role="status" aria-live="polite"></p>
+    </form>
 </section>
 
 <section class="home-card weather-card">
@@ -210,6 +537,32 @@
         <p>読み込み中...</p>
     </div>
 </section>
+
+<section class="home-card notice-card">
+    <h2><i class="fa-solid fa-bullhorn section-icon" aria-hidden="true"></i>指示・発信ボード</h2>
+    <p class="notice-source"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>防災対策課が確認した情報のみ表示しています</p>
+    {% if resident_notices %}
+    <div class="notice-list">
+        {% for notice in resident_notices %}
+        <article class="notice-item">
+            <div class="notice-item-header">
+                <p class="notice-content">{{ notice.content }}</p>
+                <time class="notice-updated" datetime="{{ notice.updated_at or notice.created_at }}">最終更新：{{ notice.updated_at or notice.created_at or '日時不明' }}</time>
+            </div>
+            {% if notice.shelter %}
+            <p class="notice-shelter"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> 避難先：{{ notice.shelter }}</p>
+            {% endif %}
+            {% if notice.status %}
+            <p class="notice-status">状態：{{ notice.status }}</p>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="notice-empty">現在、住民向けの指示・発信はありません。</p>
+    {% endif %}
+</section>
+</div>
 
 <!-- Leaflet の読み込み -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -224,6 +577,72 @@ document.addEventListener('DOMContentLoaded', function() {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
+
+    const reportForm = document.getElementById('disasterReportForm');
+    const disasterType = document.getElementById('disasterType');
+    const otherDetailField = document.getElementById('otherDetailField');
+    const otherDetail = document.getElementById('otherDetail');
+    const reportLocation = document.getElementById('reportLocation');
+    const reportMessage = document.getElementById('reportMessage');
+
+    disasterType.addEventListener('change', function() {
+        const isOther = disasterType.value === 'その他';
+        otherDetailField.hidden = !isOther;
+        otherDetail.required = isOther;
+        if (!isOther) {
+            otherDetail.value = '';
+        }
+    });
+
+    document.getElementById('getLocationButton').addEventListener('click', function() {
+        if (!navigator.geolocation) {
+            reportMessage.textContent = '現在地を取得できません。位置情報を入力してください。';
+            reportMessage.className = 'report-message error';
+            return;
+        }
+
+        reportMessage.textContent = '現在地を取得しています...';
+        reportMessage.className = 'report-message';
+        navigator.geolocation.getCurrentPosition(function(position) {
+            reportLocation.value = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
+            reportMessage.textContent = '現在地を入力しました。';
+            reportMessage.className = 'report-message success';
+        }, function() {
+            reportMessage.textContent = '現在地を取得できません。位置情報を入力してください。';
+            reportMessage.className = 'report-message error';
+        });
+    });
+
+    reportForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        reportMessage.textContent = '';
+        reportMessage.className = 'report-message';
+
+        fetch('/api/disaster_reports', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                disaster_type: disasterType.value,
+                other_detail: otherDetail.value,
+                location: reportLocation.value,
+                situation: document.getElementById('reportSituation').value
+            })
+        })
+            .then(response => response.json().then(data => ({ok: response.ok, data: data})))
+            .then(result => {
+                reportMessage.textContent = result.data.message || result.data.error;
+                reportMessage.className = `report-message ${result.ok ? 'success' : 'error'}`;
+                if (result.ok) {
+                    reportForm.reset();
+                    otherDetailField.hidden = true;
+                    otherDetail.required = false;
+                }
+            })
+            .catch(function() {
+                reportMessage.textContent = '送信に失敗しました。時間をおいて再度お試しください。';
+                reportMessage.className = 'report-message error';
+            });
+    });
 
     // 気象警報・注意報の自動更新機能
     function updateWeatherWarnings() {
