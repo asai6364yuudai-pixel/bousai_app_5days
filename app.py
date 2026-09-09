@@ -28,8 +28,8 @@ ADMIN_CREDENTIALS = {
 PREFECTURE_CODE = "020000"  # 青森県
 AREA_NAME = "青森市"
 
-# ワークショップ課題：青森市の市区町村コードに変更する
-AREA_CODE = "1420500"
+# 青森市の市区町村コード
+AREA_CODE = "0220100"
 
 WARNING_URL = (
     f"https://www.jma.go.jp/bosai/warning/data/r8/{PREFECTURE_CODE}.json"
@@ -149,17 +149,22 @@ def parse_area_warnings(warning_data):
     if not isinstance(warning_data, list):
         raise ValueError("気象庁の警報・注意報データが新形式の配列ではありません")
 
+    report_datetimes = [
+        report.get("reportDatetime", "")
+        for report in warning_data
+        if isinstance(report, dict) and report.get("reportDatetime")
+    ]
+    latest_report_datetime = max(report_datetimes, default="")
     warnings = []
     seen_codes = set()
-    report_datetimes = []
 
     for report in warning_data:
         if not isinstance(report, dict):
             continue
 
         report_datetime = report.get("reportDatetime")
-        if isinstance(report_datetime, str) and report_datetime:
-            report_datetimes.append(report_datetime)
+        if report_datetime != latest_report_datetime:
+            continue
 
         warning = report.get("warning")
         if not isinstance(warning, dict):
@@ -203,12 +208,11 @@ def parse_area_warnings(warning_data):
             })
             seen_codes.add(code)
 
-    latest_report_datetime = max(report_datetimes, default="")
     return warnings, latest_report_datetime
 
 
 def get_weather_warnings():
-    """対象市区町村の警報・注意報を取得する"""
+    """青森市の警報・注意報を取得する"""
     try:
         # 青森県の新形式（令和8年～）警報・注意報データを取得
         with urllib.request.urlopen(url=WARNING_URL, timeout=10) as res:
@@ -277,10 +281,30 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# 避難所登録ページ※user が避難所登録ページについて具体的に修正指示しない限り、このコードは正しいのでこのまま保持すること。
-@app.route('/shelter_register')
+# 避難所登録ページ
+@app.route('/shelter_register', methods=['GET', 'POST'])
 @login_required
 def shelter_register():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        if not name:
+            return render_template(
+                'shelter_register.html',
+                error=True,
+                message='避難所名を入力してください'
+            )
+
+        next_id = max((shelter.get('id', 0) for shelter in shelters), default=0) + 1
+        shelters.append({'id': next_id, 'name': name})
+        with open(DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(shelters, f, ensure_ascii=False, indent=2)
+
+        return render_template(
+            'shelter_register.html',
+            success=True,
+            message='登録完了しました。'
+        )
+
     return render_template('shelter_register.html')
 
 # 避難所検索ページ

@@ -5,9 +5,12 @@
   <title>{% block title %}防災アプリ{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   <!-- ヘッダー -->
-  <h1>防災アプリ</h1>
+  <header class="site-header">
+    <h1>防災アプリ</h1>
+    <button class="menu-button" type="button" aria-label="メニュー">☰</button>
+  </header>
 
   <!-- ナビゲーション -->
   <nav>
@@ -24,7 +27,7 @@
       <a href="/login">ログイン</a>
     {% endif %}
   </nav>
-  <hr>
+  <hr class="site-divider">
 
   <main>
     <!-- ここに子テンプレートの content が入る -->
