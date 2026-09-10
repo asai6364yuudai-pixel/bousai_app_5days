@@ -4,6 +4,7 @@ from functools import wraps
 import hashlib
 import hmac
 import json
+import math
 import os
 import re
 import threading
@@ -140,6 +141,7 @@ TRANSLATIONS = {
         'name_order': '避難所名順',
         'recommendation_order': 'おすすめ度順',
         'crowding_order': '混雑が少ない順',
+        'distance_order': '仮現在地から近い順',
         'recommendation_distance': 'おすすめ度（距離）',
         'travel_time': '避難所までの時間',
         'telephone': '電話番号',
@@ -312,6 +314,7 @@ TRANSLATIONS = {
         'name_order': 'Shelter name',
         'recommendation_order': 'Recommendation',
         'crowding_order': 'Least crowded',
+        'distance_order': 'Nearest to the reference location',
         'recommendation_distance': 'Recommendation (distance)',
         'travel_time': 'Travel time to shelter',
         'telephone': 'Phone number',
@@ -383,6 +386,9 @@ AREA_NAME = "青森市"
 
 # 青森市の市区町村コード
 AREA_CODE = "0220100"
+
+# 検索結果の距離順で使う固定の仮現在地
+SEARCH_ORIGIN = {'latitude': 40.8244988, 'longitude': 140.7431883}
 
 WARNING_URL = (
     f"https://www.jma.go.jp/bosai/warning/data/r8/{PREFECTURE_CODE}.json"
@@ -686,7 +692,7 @@ def format_report_time(iso_str):
 def filter_and_sort_shelters(items, district='', sort=''):
     """避難所を地区で絞り込み、指定された方法で安定して並べ替える"""
     district = str(district or '').strip()
-    sort = sort if sort in ('name', 'recommendation', 'crowding') else ''
+    sort = sort if sort in ('name', 'recommendation', 'crowding', 'distance') else ''
     results = [
         shelter for shelter in items
         if not district or str(shelter.get('district', '')).strip() == district
@@ -701,7 +707,39 @@ def filter_and_sort_shelters(items, district='', sort=''):
         )
     elif sort == 'crowding':
         results.sort(key=lambda shelter: shelter_occupancy_sort_key(shelter))
+    elif sort == 'distance':
+        results.sort(key=lambda shelter: shelter_distance_sort_key(shelter))
     return results
+
+
+def shelter_distance(shelter):
+    """固定仮現在地からの距離をkmで返す。住所または座標がなければ None。"""
+    if not str(shelter.get('address', '')).strip():
+        return None
+    try:
+        latitude = float(shelter.get('latitude'))
+        longitude = float(shelter.get('longitude'))
+    except (TypeError, ValueError):
+        return None
+    if not -90 <= latitude <= 90 or not -180 <= longitude <= 180:
+        return None
+
+    origin_latitude = math.radians(SEARCH_ORIGIN['latitude'])
+    latitude_radians = math.radians(latitude)
+    delta_latitude = latitude_radians - origin_latitude
+    delta_longitude = math.radians(longitude - SEARCH_ORIGIN['longitude'])
+    haversine = (
+        math.sin(delta_latitude / 2) ** 2
+        + math.cos(origin_latitude) * math.cos(latitude_radians)
+        * math.sin(delta_longitude / 2) ** 2
+    )
+    return 6371 * 2 * math.asin(math.sqrt(haversine))
+
+
+def shelter_distance_sort_key(shelter):
+    """距離が計算できない避難所を最後に置く。"""
+    distance = shelter_distance(shelter)
+    return (distance is None, distance if distance is not None else 0)
 
 
 def shelter_occupancy_percent(shelter):
@@ -1034,7 +1072,7 @@ def all_shelters():
         'search_results.html',
         results=prepare_shelters(filter_and_sort_shelters(shelters, district, sort)),
         district=district.strip(),
-        sort=sort if sort in ('name', 'recommendation', 'crowding') else '',
+        sort=sort if sort in ('name', 'recommendation', 'crowding', 'distance') else '',
     )
 
 
@@ -1136,7 +1174,7 @@ def search_results():
         'search_results.html',
         results=prepare_shelters(filter_and_sort_shelters(shelters, district, sort)),
         district=district.strip(),
-        sort=sort if sort in ('name', 'recommendation', 'crowding') else '',
+        sort=sort if sort in ('name', 'recommendation', 'crowding', 'distance') else '',
     )
 
 # JSON API：/shelters?district=地区名

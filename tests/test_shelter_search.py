@@ -67,6 +67,21 @@ class ShelterSearchTest(unittest.TestCase):
         self.assertIn('name"', body)
         self.assertIn('value="東"', body)
 
+    def test_distance_sort_puts_addressless_shelters_last(self):
+        shelters = [
+            {'name': '遠い施設', 'address': '青森市内', 'latitude': 40.8300, 'longitude': 140.7500},
+            {'name': '近い施設', 'address': '青森市内', 'latitude': 40.8246, 'longitude': 140.7433},
+            {'name': '住所なし', 'address': ' ', 'latitude': 40.8245, 'longitude': 140.7432},
+            {'name': '座標なし', 'address': '青森市内'},
+        ]
+        results = application.filter_and_sort_shelters(shelters, sort='distance')
+        self.assertEqual(
+            [shelter['name'] for shelter in results],
+            ['近い施設', '遠い施設', '住所なし', '座標なし'],
+        )
+        self.assertIsNone(application.shelter_distance(shelters[2]))
+        self.assertIsNone(application.shelter_distance(shelters[3]))
+
     def test_occupancy_rate_is_reflected_in_search_and_home(self):
         application.shelters[0].update({
             'accepted_count': '5', 'capacity': '10',
