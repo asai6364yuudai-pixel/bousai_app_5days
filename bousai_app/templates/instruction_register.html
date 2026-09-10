@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}指示登録 - {{ t('app_name') }}{% endblock %}
+{% block title %}{{ t('instruction_register') }} - {{ t('app_name') }}{% endblock %}
 {% block content %}
 <style>
  </style>
  <div class="register-page">
-   <h2>指示登録</h2>
+  <h2>{{ t('instruction_register') }}</h2>
    {% if message %}<p class="message" role="status">{{ message }}</p>{% endif %}{% if error %}<p class="message error" role="alert">{{ error }}</p>{% endif %}
    <form class="register-panel" method="post">
-     <div class="form-row"><div class="form-field"><label for="source">指示元部署</label><select id="source" name="source" required><option value="">選択してください</option>{% for department in departments %}<option value="{{ department }}">{{ department }}</option>{% endfor %}</select></div><div class="form-field"><label for="target">対象部署</label><select id="target" name="target" required><option value="">選択してください</option>{% for department in departments %}<option value="{{ department }}">{{ department }}</option>{% endfor %}</select></div></div>
-     <div class="form-field"><label for="content">指示内容</label><textarea id="content" name="content" required></textarea></div>
-     <div class="form-row"><div class="form-field"><label for="status">状態</label><select id="status" name="status">{% for status in statuses %}<option value="{{ status }}">{{ status }}</option>{% endfor %}</select></div><div class="form-field"><label for="shelter">避難先（任意）</label><select id="shelter" name="shelter"><option value="">指定なし</option>{% for shelter in shelters %}<option value="{{ shelter.get('name', '') }}">{{ shelter.get('name', '') }}</option>{% endfor %}</select></div></div>
-     <div class="actions"><button type="submit">指示を登録</button></div>
+    <div class="form-row"><div class="form-field"><label for="source">{{ t('source_department') }}</label><select id="source" name="source" required><option value="">{{ t('select_option') }}</option>{% for department in departments %}<option value="{{ department }}">{{ translate_choice(department) }}</option>{% endfor %}</select></div><div class="form-field"><label for="target">{{ t('target_department') }}</label><select id="target" name="target" required><option value="">{{ t('select_option') }}</option>{% for department in departments %}<option value="{{ department }}">{{ translate_choice(department) }}</option>{% endfor %}</select></div></div>
+    <div class="form-field"><label for="content">{{ t('instruction_content') }}</label><textarea id="content" name="content" required></textarea></div>
+    <div class="form-row"><div class="form-field"><label for="status">{{ t('status') }}</label><select id="status" name="status">{% for status in statuses %}<option value="{{ status }}">{{ translate_choice(status) }}</option>{% endfor %}</select></div><div class="form-field"><label for="shelter">{{ t('shelter_optional') }}</label><select id="shelter" name="shelter"><option value="">{{ t('unspecified_area') }}</option>{% for shelter in shelters %}<option value="{{ shelter.get('name', '') }}">{{ shelter.get('name', '') }}</option>{% endfor %}</select></div></div>
+    <div class="actions"><button type="submit">{{ t('register_instruction') }}</button></div>
    </form>
  </div>
  {% endblock %}

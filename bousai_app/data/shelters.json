@@ -8,6 +8,16 @@
     "name": "b"
   },
   {
+    "id": 8,
+    "name": "テスト",
+    "accepted_count": "20",
+    "capacity": "100",
+    "address": "青森県青森市長島1-1-1",
+    "phone": "000000",
+    "latitude": 40.8244988,
+    "longitude": 140.7431883
+  },
+  {
     "id": 1,
     "name": "御所見小学校"
   },

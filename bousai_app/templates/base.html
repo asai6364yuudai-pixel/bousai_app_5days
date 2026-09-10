@@ -94,6 +94,25 @@
       font-weight: 700;
     }
 
+    body:not(.home-page) .site-header > nav {
+      min-width: 0;
+    }
+
+    body:not(.home-page) .nav-button,
+    body:not(.home-page) button,
+    body:not(.home-page) select,
+    body:not(.home-page) input:not([type='radio']):not([type='checkbox']) {
+      min-height: 44px;
+    }
+
+    body:not(.home-page) button,
+    body:not(.home-page) select,
+    body:not(.home-page) input:not([type='radio']):not([type='checkbox']),
+    body:not(.home-page) textarea {
+      box-sizing: border-box;
+      max-width: 100%;
+    }
+
     body:not(.login-page):not(.home-page) .register-panel,
     body:not(.login-page):not(.home-page) .board-panel,
     body:not(.login-page):not(.home-page) .shelter-result {
@@ -130,6 +149,68 @@
       body:not(.login-page):not(.home-page) main {
         width: min(100% - 24px, 640px);
         margin-top: 20px;
+      }
+
+      body:not(.home-page) .site-header {
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      body:not(.home-page) .site-header > nav {
+        gap: 8px;
+        margin-left: 0;
+        padding-bottom: 4px;
+        scrollbar-width: thin;
+      }
+
+      body:not(.home-page) .nav-button {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 8px 12px;
+      }
+
+      body:not(.home-page) .language-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 44px;
+      }
+
+      body:not(.home-page) .language-select {
+        min-height: 44px;
+      }
+
+      body.login-page main {
+        width: min(100% - 32px, 520px);
+        margin: 24px auto 48px;
+      }
+
+      body.login-page form input,
+      body.login-page form button {
+        width: 100%;
+      }
+
+      body.login-page form button {
+        min-height: 48px;
+      }
+
+      body:not(.home-page) .result-links,
+      body:not(.home-page) .register-actions,
+      body:not(.home-page) .board-actions,
+      body:not(.home-page) .filter-actions {
+        align-items: stretch;
+      }
+
+      body:not(.home-page) .result-links a,
+      body:not(.home-page) .board-actions a,
+      body:not(.home-page) .filter-actions button,
+      body:not(.home-page) .filter-actions a,
+      body:not(.home-page) .register-actions button {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
     }
 
@@ -197,8 +278,8 @@
 <body class="{% block body_class %}app-page{% endblock %}">
   <!-- ヘッダー -->
   <header class="site-header">
-    <h1>{% block site_name %}防災アプリ{% endblock %}</h1>
-    <button class="menu-button" type="button" aria-expanded="false" aria-controls="siteMenu" aria-label="メニューを開く">☰</button>
+    <h1>{% block site_name %}{{ t('app_name') }}{% endblock %}</h1>
+    <button class="menu-button" type="button" aria-expanded="false" aria-controls="siteMenu" aria-label="{{ t('menu_open') }}">☰</button>
     <nav id="siteMenu">
       <a class="nav-button nav-home" href="/">{{ t('home') }}</a>
       <a class="nav-button nav-search" href="/shelter_search">{{ t('shelter_search') }}</a>

@@ -42,7 +42,7 @@ TRANSLATIONS = {
         'map': '避難所マップ',
         'map_current_location': '現在地へ移動',
         'map_show_all': '全避難所を表示',
-        'map_legend': '凡例',
+        'map_legend': '混雑度',
         'map_available': '受け入れ可・空き',
         'map_somewhat_crowded': 'やや混雑',
         'map_crowded': '混雑',
@@ -127,6 +127,75 @@ TRANSLATIONS = {
         'popup_address': '住所',
         'popup_accepting': '受け入れ可否',
         'popup_congestion': '混雑度',
+        'menu_open': 'メニューを開く',
+        'emergency_rescue': '救助要請',
+        'emergency_rescue_message': '命に関わる緊急の救助要請は、こちらにお電話ください',
+        'emergency_placeholder': '仮番号',
+        'all_display': 'すべて表示',
+        'search': '検索',
+        'district': '地区',
+        'all_districts': 'すべての地区',
+        'sort': '並び替え',
+        'default_order': '登録順',
+        'name_order': '避難所名順',
+        'recommendation_order': 'おすすめ度順',
+        'crowding_order': '混雑が少ない順',
+        'recommendation_distance': 'おすすめ度（距離）',
+        'travel_time': '避難所までの時間',
+        'telephone': '電話番号',
+        'back_to_search_screen': '検索画面に戻る',
+        'back_to_top': 'トップページへ戻る',
+        'percentage_unregistered': '割合未登録',
+        'announcement_register': '発信登録',
+        'instruction_register': '指示登録',
+        'announcement_register_page': '発信登録ページへ',
+        'instruction_register_page': '指示登録ページへ',
+        'announcement_list': '発信一覧',
+        'instruction_list': '指示一覧',
+        'filter': '絞り込む',
+        'clear': '解除',
+        'all_areas': '全地域',
+        'all_warning_types': '全種類',
+        'no_announcements': '登録されている発信はありません。',
+        'no_content': '内容なし',
+        'unspecified_area': '指定なし',
+        'normal_warning': '通常',
+        'target_area': '対象区域',
+        'announcement_content_optional': '発信内容（任意）',
+        'target': '対象',
+        'resident': '住民',
+        'warning_type': '警報・注意報',
+        'register_announcement': '発信を登録',
+        'source_department': '指示元部署',
+        'target_department': '対象部署',
+        'select_option': '選択してください',
+        'instruction_content': '指示内容',
+        'shelter_optional': '避難先（任意）',
+        'no_registered_shelters': '登録されている避難所はありません。',
+        'shelter_list': '避難所一覧',
+        'clear_selection': '選択解除',
+        'delete': '削除',
+        'save_update': '登録・更新',
+        'accepted_count': '受け入れ済み人数',
+        'capacity': '受け入れ可能人数',
+        'telephone_label': '電話番号',
+        'unregistered': '未登録',
+        'issued': '発令',
+        'released': '解除',
+        'register_instruction': '指示を登録',
+        'pending': '未対応',
+        'in_progress': '対応中',
+        'completed': '完了',
+        'admin_login': '管理者ログイン',
+        'admin_notice': '指示ボード・避難所登録の利用には管理者権限が必要です。',
+        'password': 'パスワード',
+        'password_hint': '「123」と入力してください',
+        'map_display_failed': '地図を表示できません',
+        'login_failed': 'パスワードが正しくありません。',
+        'announcement_area_required': '対象区域を1つ以上選択してください。',
+        'announcement_registered': '発信を登録しました。',
+        'disaster_department': '防災課',
+        'road_department': '道路管理課',
     },
     'en': {
         'app_name': 'Disaster Prevention App',
@@ -145,7 +214,7 @@ TRANSLATIONS = {
         'map': 'Shelter Map',
         'map_current_location': 'Go to my location',
         'map_show_all': 'Show all shelters',
-        'map_legend': 'Legend',
+        'map_legend': 'Crowding',
         'map_available': 'Available',
         'map_somewhat_crowded': 'Somewhat crowded',
         'map_crowded': 'Crowded',
@@ -230,6 +299,75 @@ TRANSLATIONS = {
         'popup_address': 'Address',
         'popup_accepting': 'Accepting evacuees',
         'popup_congestion': 'Crowding',
+        'menu_open': 'Open menu',
+        'emergency_rescue': 'Rescue request',
+        'emergency_rescue_message': 'For a life-threatening emergency rescue request, please call this number.',
+        'emergency_placeholder': 'Placeholder number',
+        'all_display': 'Show all',
+        'search': 'Search',
+        'district': 'District',
+        'all_districts': 'All districts',
+        'sort': 'Sort by',
+        'default_order': 'Registration order',
+        'name_order': 'Shelter name',
+        'recommendation_order': 'Recommendation',
+        'crowding_order': 'Least crowded',
+        'recommendation_distance': 'Recommendation (distance)',
+        'travel_time': 'Travel time to shelter',
+        'telephone': 'Phone number',
+        'back_to_search_screen': 'Back to search',
+        'back_to_top': 'Back to home',
+        'percentage_unregistered': 'Rate unavailable',
+        'announcement_register': 'Register announcement',
+        'instruction_register': 'Register instruction',
+        'announcement_register_page': 'Announcement registration',
+        'instruction_register_page': 'Instruction registration',
+        'announcement_list': 'Announcement list',
+        'instruction_list': 'Instruction list',
+        'filter': 'Filter',
+        'clear': 'Clear',
+        'all_areas': 'All areas',
+        'all_warning_types': 'All types',
+        'no_announcements': 'There are no registered announcements.',
+        'no_content': 'No content',
+        'unspecified_area': 'Not specified',
+        'normal_warning': 'Normal',
+        'target_area': 'Target area',
+        'announcement_content_optional': 'Announcement content (optional)',
+        'target': 'Target',
+        'resident': 'Residents',
+        'warning_type': 'Warning/advisory type',
+        'register_announcement': 'Register announcement',
+        'source_department': 'Source department',
+        'target_department': 'Target department',
+        'select_option': 'Please select',
+        'instruction_content': 'Instruction content',
+        'shelter_optional': 'Shelter (optional)',
+        'no_registered_shelters': 'There are no registered shelters.',
+        'shelter_list': 'Shelter list',
+        'clear_selection': 'Clear selection',
+        'delete': 'Delete',
+        'save_update': 'Register / Update',
+        'accepted_count': 'Currently accepted',
+        'capacity': 'Shelter capacity',
+        'telephone_label': 'Phone number',
+        'unregistered': 'Not registered',
+        'issued': 'Issued',
+        'released': 'Released',
+        'register_instruction': 'Register instruction',
+        'pending': 'Pending',
+        'in_progress': 'In progress',
+        'completed': 'Completed',
+        'admin_login': 'Administrator login',
+        'admin_notice': 'Administrator access is required for the instruction board and shelter registration.',
+        'password': 'Password',
+        'password_hint': 'Enter "123"',
+        'map_display_failed': 'The map could not be displayed',
+        'login_failed': 'The password is incorrect.',
+        'announcement_area_required': 'Please select at least one target area.',
+        'announcement_registered': 'The announcement was registered.',
+        'disaster_department': 'Disaster Management Office',
+        'road_department': 'Road Management Office',
     }
 }
 
@@ -345,11 +483,48 @@ def translate(key, language=None):
     return TRANSLATIONS[language].get(key, TRANSLATIONS['ja'].get(key, key))
 
 
+def translate_warning(value, language=None):
+    """警報種別の保存値を表示言語へ変換する"""
+    if (language or get_language()) == 'ja':
+        return value
+    replacements = (
+        ('レベル2', 'Level 2 '), ('レベル3', 'Level 3 '),
+        ('レベル4', 'Level 4 '), ('レベル5', 'Level 5 '),
+        ('大雨', 'Heavy rain'), ('高潮', 'Storm surge'),
+        ('土砂災害', 'Landslide'), ('洪水', 'Flood'), ('大雪', 'Heavy snow'),
+        ('暴風雪', 'Blizzard'), ('風雪', 'Snowstorm'), ('強風', 'Strong wind'),
+        ('暴風', 'Storm'), ('波浪', 'High waves'), ('雷', 'Thunderstorm'),
+        ('融雪', 'Snowmelt'), ('濃霧', 'Dense fog'), ('乾燥', 'Dryness'),
+        ('なだれ', 'Avalanche'), ('低温', 'Low temperature'), ('霜', 'Frost'),
+        ('着氷', 'Icing'), ('着雪', 'Snow accretion'), ('その他の注意報', 'Other advisory'),
+        ('特別警報', ' emergency warning'), ('危険警報', ' critical warning'),
+        ('警報', ' warning'), ('注意報', ' advisory'), ('通常', 'Normal'),
+    )
+    translated = str(value)
+    for source, target in replacements:
+        translated = translated.replace(source, target)
+    return translated.strip().capitalize()
+
+
+def translate_choice(value, language=None):
+    """状態・部署などの固定選択値を表示言語へ変換する"""
+    labels = {
+        '未対応': 'pending', '対応中': 'in_progress', '完了': 'completed',
+        '発令': 'issued', '発令中': 'issued', '解除': 'released',
+        '防災課': 'disaster_department', '道路管理課': 'road_department',
+        '住民': 'resident',
+    }
+    key = labels.get(value)
+    return translate(key, language) if key else value
+
+
 @app.context_processor
 def inject_language_context():
     return {
         'language': get_language(),
         't': translate,
+        'translate_warning': translate_warning,
+        'translate_choice': translate_choice,
         'translations': TRANSLATIONS[get_language()]
     }
 
@@ -744,7 +919,7 @@ def login():
             session['username'] = username
             # ログイン成功後は指定されたページにリダイレクト
             return redirect(next_url)
-        return render_template('login.html', error=True, message="パスワードが正しくありません。", next=next_url)
+        return render_template('login.html', error=True, message=translate('login_failed'), next=next_url)
 
     # ログイン済みの場合は指定されたページにリダイレクト
     if session.get('logged_in'):
@@ -900,7 +1075,7 @@ def announcement_register():
     if request.method == 'POST':
         selected_areas = [area for area in request.form.getlist('area') if area in AREAS]
         if not selected_areas:
-            error = '対象区域を1つ以上選択してください。'
+            error = translate('announcement_area_required')
         else:
             now = get_japan_time()
             instructions.append({
@@ -916,7 +1091,7 @@ def announcement_register():
                 'created_at': now, 'updated_at': now,
             })
             save_instructions()
-            message = '発信を登録しました。'
+            message = translate('announcement_registered')
     return render_template(
         'announcement_register.html', areas=AREAS, warning_options=WARNING_OPTIONS,
         announcement_statuses=ANNOUNCEMENT_STATUSES, message=message, error=error,

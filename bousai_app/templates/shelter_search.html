@@ -1,16 +1,22 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+	.shelter-search-form { display: grid; gap: 10px; max-width: 560px; }
+	.shelter-search-form select,
+	.shelter-search-form button { min-height: 44px; padding: 8px 12px; font: inherit; }
+	.shelter-search-form button { border: 0; border-radius: 6px; background: #2f5baa; color: #fff; font-weight: 700; }
+</style>
 <h1>{{ t('shelter_search') }}</h1>
 <p>{{ t('search_description') }}</p>
 
-<form method="get" action="{{ url_for('search_results') }}">
-	<label for="district">地区</label>
+<form class="shelter-search-form" method="get" action="{{ url_for('search_results') }}">
+	<label for="district">{{ t('district') }}</label>
 	<select id="district" name="district">
-		<option value="">すべての地区</option>
+		<option value="">{{ t('all_districts') }}</option>
 		{% for district in districts %}<option value="{{ district }}">{{ district }}</option>{% endfor %}
 	</select>
-	<button type="submit">検索</button>
+	<button type="submit">{{ t('search') }}</button>
 </form>
 <p><a href="{{ url_for('all_shelters') }}">{{ t('all_shelters') }}</a></p>
 {% endblock %}

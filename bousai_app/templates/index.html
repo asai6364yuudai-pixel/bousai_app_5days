@@ -706,7 +706,7 @@
     <ul class="home-toc-list">
         <li><a href="#shelter-map">{{ t('map') }}</a></li>
         <li><a href="#disaster-report">{{ t('report_title') }}</a></li>
-        <li><a href="#emergency-rescue">救助要請</a></li>
+        <li><a href="#emergency-rescue">{{ t('emergency_rescue') }}</a></li>
         <li><a href="#weather-warnings">{{ t('weather_title') }}</a></li>
         <li><a href="#resident-notices">{{ t('notice_title') }}</a></li>
     </ul>
@@ -727,10 +727,10 @@
     <p id="mapMessage" class="map-message" role="status" aria-live="polite"></p>
     <div class="map-legend" aria-label="{{ t('map_legend') }}">
         <p class="map-legend-title">{{ t('map_legend') }}</p>
-        <span class="map-legend-item"><span class="map-legend-dot marker-available" aria-hidden="true"></span>{{ t('map_available') }}</span>
-        <span class="map-legend-item"><span class="map-legend-dot marker-somewhat-crowded" aria-hidden="true"></span>{{ t('map_somewhat_crowded') }}</span>
-        <span class="map-legend-item"><span class="map-legend-dot marker-crowded" aria-hidden="true"></span>{{ t('map_crowded') }}</span>
-        <span class="map-legend-item"><span class="map-legend-dot marker-unavailable" aria-hidden="true"></span>{{ t('map_unavailable') }}</span>
+        <span class="map-legend-item"><span class="map-legend-dot marker-available" aria-hidden="true"></span>0〜49%</span>
+        <span class="map-legend-item"><span class="map-legend-dot marker-somewhat-crowded" aria-hidden="true"></span>50〜79%</span>
+        <span class="map-legend-item"><span class="map-legend-dot marker-crowded" aria-hidden="true"></span>80%以上</span>
+        <span class="map-legend-item"><span class="map-legend-dot marker-unavailable" aria-hidden="true"></span>{{ t('percentage_unregistered') }}</span>
     </div>
 </section>
 
@@ -769,8 +769,8 @@
         <p id="reportMessage" class="report-message" role="status" aria-live="polite"></p>
     </form>
     <aside id="emergency-rescue" class="emergency-rescue" aria-labelledby="emergency-rescue-heading">
-        <p id="emergency-rescue-heading">命に関わる緊急の救助要請は、こちらにお電話ください</p>
-        <a href="tel:119" aria-label="緊急通報 119">119</a>
+        <p id="emergency-rescue-heading">{{ t('emergency_rescue_message') }}</p>
+        <a href="tel:000-0000-0000" aria-label="{{ t('emergency_placeholder') }} 000-0000-0000">000-0000-0000</a>
     </aside>
 </section>
 
@@ -788,9 +788,9 @@
     <h2><i class="fa-solid fa-bullhorn section-icon" aria-hidden="true"></i>{{ t('notice_title') }}</h2>
     <p class="notice-source"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>{{ t('notice_source') }}</p>
     <form class="notice-filter" method="get" action="{{ url_for('index') }}">
-        <label for="noticeArea">地区</label>
+        <label for="noticeArea">{{ t('district') }}</label>
         <select id="noticeArea" name="area" onchange="this.form.submit()">
-            <option value="">すべて表示</option>
+            <option value="">{{ t('all_display') }}</option>
             {% for area in areas %}
             <option value="{{ area }}"{% if area_filter == area %} selected{% endif %}>{{ area }}</option>
             {% endfor %}
@@ -808,7 +808,7 @@
             <p class="notice-shelter"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ t('shelter_destination') }}: {{ notice.shelter }}</p>
             {% endif %}
             {% if notice.status %}
-            <p class="notice-status{% if notice.status in ('発令', '発令中') %} status-issued{% elif notice.status == '解除' %} status-released{% endif %}">{{ t('status') }}: {{ notice.status }}</p>
+            <p class="notice-status{% if notice.status in ('発令', '発令中') %} status-issued{% elif notice.status == '解除' %} status-released{% endif %}">{{ t('status') }}: {{ translate_choice(notice.status) }}</p>
             {% endif %}
         </article>
         {% endfor %}
@@ -917,7 +917,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <strong>${escapeHtml(shelter.name)}</strong><br>
             ${escapeHtml(translations.popup_address)}: ${escapeHtml(shelter.address)}<br>
             ${escapeHtml(translations.popup_accepting)}: ${escapeHtml(translateShelterValue(shelter.accepting, acceptingLabels))}<br>
-            ${escapeHtml(translations.popup_congestion)}: ${escapeHtml(shelter.occupancy_display || translateShelterValue(shelter.congestion, congestionLabels) || '未登録')}
+            ${escapeHtml(translations.popup_congestion)}: ${escapeHtml(shelter.occupancy_display || translateShelterValue(shelter.congestion, congestionLabels) || {{ t('unregistered')|tojson }})}
         `);
     });
 

@@ -34,7 +34,7 @@ class ShelterSearchTest(unittest.TestCase):
         response = self.client.get('/search_results?district=%E6%9D%B1&sort=name')
         body = response.get_data(as_text=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('避難所検索結果', body)
+        self.assertIn('検索結果', body)
         self.assertIn('Beta', body)
         self.assertIn('徒歩10分', body)
         self.assertIn('03-0000-0001', body)
@@ -85,6 +85,9 @@ class ShelterSearchTest(unittest.TestCase):
         application.shelters[1].update({'accepted_count': '9', 'capacity': '10'})
         results = application.filter_and_sort_shelters(application.shelters, sort='crowding')
         self.assertEqual(results[0]['name'], 'Beta')
+        self.assertIn('0〜49%', home_body)
+        self.assertIn('50〜79%', home_body)
+        self.assertIn('80%以上', home_body)
 
     def test_home_notice_area_filter(self):
         all_body = self.client.get('/').get_data(as_text=True)
@@ -101,7 +104,7 @@ class ShelterSearchTest(unittest.TestCase):
     def test_home_emergency_rescue_notice(self):
         body = self.client.get('/').get_data(as_text=True)
         self.assertIn('命に関わる緊急の救助要請は、こちらにお電話ください', body)
-        self.assertIn('href="tel:119"', body)
+        self.assertIn('href="tel:000-0000-0000"', body)
         self.assertIn('href="#emergency-rescue">救助要請</a>', body)
 
     def test_home_notice_status_colors(self):
@@ -112,6 +115,20 @@ class ShelterSearchTest(unittest.TestCase):
         body = self.client.get('/').get_data(as_text=True)
         self.assertIn('status-issued', body)
         self.assertIn('status-released', body)
+
+    def test_english_translation_covers_main_select_labels(self):
+        with self.client.session_transaction() as session:
+            session['language'] = 'en'
+            session['logged_in'] = True
+        search_body = self.client.get('/search_results').get_data(as_text=True)
+        announcement_body = self.client.get('/announcement_register').get_data(as_text=True)
+        instruction_body = self.client.get('/instruction_register').get_data(as_text=True)
+        self.assertIn('<title>Search results - Disaster Prevention App</title>', search_body)
+        self.assertIn('Least crowded', search_body)
+        self.assertIn('Issued', announcement_body)
+        self.assertIn('Released', announcement_body)
+        self.assertIn('Disaster Management Office', instruction_body)
+        self.assertIn('In progress', instruction_body)
 
     def test_announcement_registration_uses_announcement_statuses(self):
         with self.client.session_transaction() as session:

@@ -45,22 +45,22 @@
       <section class="register-panel" aria-labelledby="form-heading">
         <h2 id="form-heading">{{ t('shelter_register') }}</h2>
         <div class="form-field"><label for="name">{{ t('shelter_name') }}</label><input type="text" id="name" name="name" value="{{ values.get('name', '') }}" required></div>
-        <div class="form-field"><label for="acceptedCount">受け入れ済み人数</label><input type="number" id="acceptedCount" name="accepted_count" value="{{ values.get('accepted_count', '') }}" min="0" step="1" inputmode="numeric"></div>
-        <div class="form-field"><label for="capacity">受け入れ可能人数</label><input type="number" id="capacity" name="capacity" value="{{ values.get('capacity', '') }}" min="0" step="1" inputmode="numeric"></div>
+        <div class="form-field"><label for="acceptedCount">{{ t('accepted_count') }}</label><input type="number" id="acceptedCount" name="accepted_count" value="{{ values.get('accepted_count', '') }}" min="0" step="1" inputmode="numeric"></div>
+        <div class="form-field"><label for="capacity">{{ t('capacity') }}</label><input type="number" id="capacity" name="capacity" value="{{ values.get('capacity', '') }}" min="0" step="1" inputmode="numeric"></div>
         <div class="form-field"><label for="address">{{ t('address') }}</label><input type="text" id="address" name="address" value="{{ values.get('address', '') }}" required></div>
-        <div class="form-field"><label for="phone">電話番号</label><input type="tel" id="phone" name="phone" value="{{ values.get('phone', '') }}" inputmode="numeric" pattern="[0-9]*"></div>
-        <div class="register-actions"><button class="delete-button" type="submit" name="action" value="delete">削除</button><button class="save-button" type="submit" name="action" value="save">登録・更新</button></div>
+        <div class="form-field"><label for="phone">{{ t('telephone_label') }}</label><input type="tel" id="phone" name="phone" value="{{ values.get('phone', '') }}" inputmode="numeric" pattern="[0-9]*"></div>
+        <div class="register-actions"><button class="delete-button" type="submit" name="action" value="delete">{{ t('delete') }}</button><button class="save-button" type="submit" name="action" value="save">{{ t('save_update') }}</button></div>
       </section>
 
       <section class="register-panel" aria-labelledby="list-heading">
-        <div class="list-heading"><h2 id="list-heading">避難所一覧</h2><button class="clear-selection" type="button" id="clearSelection">選択解除</button></div>
+        <div class="list-heading"><h2 id="list-heading">{{ t('shelter_list') }}</h2><button class="clear-selection" type="button" id="clearSelection">{{ t('clear_selection') }}</button></div>
         {% if shelters %}
           <ul class="shelter-list">
             {% for shelter in shelters %}
               <li><label class="shelter-option"><input type="radio" name="shelter_choice" value="{{ shelter.get('id', '') }}"{% if selected_id == shelter.get('id', '')|string %} checked{% endif %} data-name="{{ shelter.get('name', '') }}" data-accepted-count="{{ shelter.get('accepted_count', '') }}" data-capacity="{{ shelter.get('capacity', '') }}" data-address="{{ shelter.get('address', '') }}" data-phone="{{ shelter.get('phone', '') }}"><span>{{ shelter.get('name', '') }}</span></label></li>
             {% endfor %}
           </ul>
-        {% else %}<p>登録されている避難所はありません。</p>{% endif %}
+        {% else %}<p>{{ t('no_registered_shelters') }}</p>{% endif %}
       </section>
     </div>
   </form>
