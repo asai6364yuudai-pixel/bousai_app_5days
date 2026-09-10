@@ -565,6 +565,7 @@
         white-space: nowrap;
     }
 
+    .home-page .notice-area,
     .home-page .notice-shelter,
     .home-page .notice-status {
         margin: 7px 0 0;
@@ -804,6 +805,7 @@
                 <p class="notice-content">{{ notice.content }}</p>
                 <time class="notice-updated" datetime="{{ notice.updated_at or notice.created_at }}">{{ t('last_update') }}: {{ notice.updated_at or notice.created_at or t('unknown_time') }}</time>
             </div>
+            <p class="notice-area"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ t('target_area') }}: {{ notice.area|replace(',', '、') or t('unspecified_area') }}</p>
             {% if notice.shelter %}
             <p class="notice-shelter"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ t('shelter_destination') }}: {{ notice.shelter }}</p>
             {% endif %}
