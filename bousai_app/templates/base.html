@@ -5,6 +5,134 @@
   <title>{% block title %}{{ t('app_name') }}{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+    :root {
+      --app-blue: #2f5baa;
+      --app-green: #239b4b;
+      --app-text: #506174;
+      --app-muted: #66788b;
+      --app-border: #f0f2f6;
+      --app-surface: #ffffff;
+      --app-background: #f7f8fa;
+    }
+
+    body:not(.login-page):not(.home-page) {
+      margin: 0;
+      background: var(--app-background);
+      color: var(--app-text);
+      font-family: 'Noto Sans JP', 'Yu Gothic', sans-serif;
+      line-height: 1.6;
+    }
+
+    body:not(.login-page):not(.home-page) .site-header {
+      box-sizing: border-box;
+      min-height: 70px;
+      padding: 14px max(24px, calc((100% - 1380px) / 2));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: var(--app-blue);
+      color: #ffffff;
+    }
+
+    body:not(.login-page):not(.home-page) .site-header h1 {
+      margin: 0;
+      color: #ffffff;
+      font-size: 25px;
+      font-weight: 700;
+    }
+
+    body:not(.home-page) .site-header > nav {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-left: auto;
+      color: #ffffff;
+      font-size: 14px;
+    }
+
+    body:not(.home-page) .site-header .menu-button {
+      display: none;
+      color: #ffffff;
+    }
+
+    body:not(.login-page):not(.home-page) main {
+      width: min(1120px, calc(100% - 32px));
+      margin: 32px auto 64px;
+    }
+
+    body:not(.login-page):not(.home-page) h1,
+    body:not(.login-page):not(.home-page) h2,
+    body:not(.login-page):not(.home-page) h3 {
+      color: var(--app-blue);
+    }
+
+    body:not(.login-page):not(.home-page) input:not([type='radio']):not([type='checkbox']),
+    body:not(.login-page):not(.home-page) select,
+    body:not(.login-page):not(.home-page) textarea {
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: var(--app-surface);
+      color: #263746;
+      font: inherit;
+    }
+
+    body:not(.login-page):not(.home-page) input:not([type='radio']):not([type='checkbox']):focus,
+    body:not(.login-page):not(.home-page) select:focus,
+    body:not(.login-page):not(.home-page) textarea:focus {
+      outline: 3px solid #d7e6f8;
+      border-color: var(--app-blue);
+    }
+
+    body:not(.login-page):not(.home-page) button {
+      border-radius: 6px;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    body:not(.login-page):not(.home-page) .register-panel,
+    body:not(.login-page):not(.home-page) .board-panel,
+    body:not(.login-page):not(.home-page) .shelter-result {
+      border: 1px solid var(--app-border);
+      border-radius: 17px;
+      background: var(--app-surface);
+      box-shadow: 0 5px 18px rgba(41, 66, 102, 0.08);
+    }
+
+    body:not(.login-page):not(.home-page) .site-divider {
+      display: none;
+    }
+
+    @media (max-width: 767px) {
+      body:not(.login-page):not(.home-page) .site-header {
+        flex-wrap: wrap;
+        padding-right: 16px;
+        padding-left: 16px;
+      }
+
+      body:not(.login-page):not(.home-page) .site-header h1 {
+        font-size: 21px;
+      }
+
+      body:not(.home-page) .site-header > nav {
+        display: flex;
+        width: 100%;
+        order: 3;
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 3px;
+      }
+
+      body:not(.login-page):not(.home-page) main {
+        width: min(100% - 24px, 640px);
+        margin-top: 20px;
+      }
+    }
+
     .nav-button {
       display: inline-block;
       border-radius: 6px;
@@ -64,19 +192,9 @@
       cursor: pointer;
     }
 
-    .site-header > nav {
-      display: none;
-    }
-
-    .site-header.menu-open > nav {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-    }
   </style>
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body class="{% block body_class %}app-page{% endblock %}">
   <!-- ヘッダー -->
   <header class="site-header">
     <h1>{% block site_name %}防災アプリ{% endblock %}</h1>

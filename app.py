@@ -311,6 +311,7 @@ WARNING_OPTIONS = [
 ]
 DEPARTMENTS = ["防災課", "道路管理課", "住民"]
 INSTRUCTION_STATUSES = ["未対応", "対応中", "完了"]
+ANNOUNCEMENT_STATUSES = ["発令", "解除"]
 
 # ────────────────────────────────
 # サンプルデータの読み込み
@@ -507,9 +508,68 @@ def format_report_time(iso_str):
         return iso_str
 
 
+def filter_and_sort_shelters(items, district='', sort=''):
+    """避難所を地区で絞り込み、指定された方法で安定して並べ替える"""
+    district = str(district or '').strip()
+    sort = sort if sort in ('name', 'recommendation', 'crowding') else ''
+    results = [
+        shelter for shelter in items
+        if not district or str(shelter.get('district', '')).strip() == district
+    ]
+
+    if sort == 'name':
+        results.sort(key=lambda shelter: str(shelter.get('name', '')).casefold())
+    elif sort == 'recommendation':
+        results.sort(
+            key=lambda shelter: str(shelter.get('recommendation', '')).count('★'),
+            reverse=True,
+        )
+    elif sort == 'crowding':
+        results.sort(key=lambda shelter: shelter_occupancy_sort_key(shelter))
+    return results
+
+
+def shelter_occupancy_percent(shelter):
+    """受け入れ済み人数と容量から混雑率を返す。未登録なら None。"""
+    try:
+        accepted_count = float(shelter.get('accepted_count', ''))
+        capacity = float(shelter.get('capacity', ''))
+    except (TypeError, ValueError):
+        return None
+    if accepted_count < 0 or capacity <= 0:
+        return None
+    return accepted_count / capacity * 100
+
+
+def shelter_occupancy_sort_key(shelter):
+    """混雑率を優先し、旧形式の星表現にも対応する。"""
+    occupancy = shelter_occupancy_percent(shelter)
+    if occupancy is not None:
+        return (0, occupancy)
+    return (1, str(shelter.get('crowding', '')).count('★'))
+
+
+def prepare_shelters(items):
+    """画面表示用に混雑率を付加し、元の保存データは変更しない。"""
+    prepared = []
+    for shelter in items:
+        normalized = dict(shelter)
+        occupancy = shelter_occupancy_percent(shelter)
+        if occupancy is not None:
+            normalized['occupancy_rate'] = occupancy
+            normalized['occupancy_display'] = f'{occupancy:g}%'
+            normalized['congestion'] = (
+                '混雑' if occupancy >= 80 else
+                'やや混雑' if occupancy >= 50 else
+                '空き'
+            )
+        prepared.append(normalized)
+    return prepared
+
+
 def filter_shelters(district=None):
-    """district 指定があれば一致する避難所のみ、なければ全件を返す"""
-    return [s for s in shelters if not district or s.get('district') == district]
+    """既存 API 向けの地区絞り込みを維持する"""
+    return filter_and_sort_shelters(shelters, district=district)
 
 
 def parse_area_warnings(warning_data):
@@ -608,15 +668,28 @@ def get_weather_warnings():
 # トップページ：templates/index.html を返す（住民向け指示も表示する）
 @app.route('/')
 def index():
+    requested_area = request.args.get('area', '').strip()
+    area_filter = requested_area if requested_area in AREAS else ''
     resident_notices = sorted(
-        (i for i in instructions if i.get('target') == '住民'),
+        (
+            i for i in instructions
+            if i.get('target') == '住民'
+            and (
+                not area_filter
+                or area_filter in {
+                    area.strip() for area in str(i.get('area', '')).split(',')
+                }
+            )
+        ),
         key=lambda instruction: instruction.get('updated_at', ''),
         reverse=True
     )
     return render_template(
         'index.html',
         resident_notices=resident_notices,
-        shelters=shelters
+        shelters=prepare_shelters(shelters),
+        areas=AREAS,
+        area_filter=area_filter,
     )
 
 
@@ -738,6 +811,7 @@ def shelter_register():
     if shelter_exceeds_capacity(values) and not hmac.compare_digest(confirmation, expected_token):
         return page(translate('capacity_warning'), error=True, confirmation=expected_token)
 
+    coordinates = geocode_address(values['address'])
     with SHELTER_LOCK:
         if selected_id:
             shelter = next(
@@ -756,6 +830,11 @@ def shelter_register():
             shelters.append(shelter)
 
         shelter.update(values)
+        if coordinates:
+            shelter.update(coordinates)
+        else:
+            shelter.pop('latitude', None)
+            shelter.pop('longitude', None)
         save_shelters()
 
     values = {'name': '', 'accepted_count': '', 'capacity': '', 'address': '', 'phone': ''}
@@ -764,12 +843,24 @@ def shelter_register():
 # 避難所検索ページ
 @app.route('/shelter_search')
 def shelter_search():
-    return render_template('shelter_search.html')
+    districts = sorted({
+        str(shelter.get('district', '')).strip()
+        for shelter in shelters
+        if str(shelter.get('district', '')).strip()
+    })
+    return render_template('shelter_search.html', districts=districts)
 
 # 全施設一覧ページ
 @app.route('/all_shelters')
 def all_shelters():
-    return render_template('search_results.html', results=shelters)
+    district = request.args.get('district', '')
+    sort = request.args.get('sort', '')
+    return render_template(
+        'search_results.html',
+        results=prepare_shelters(filter_and_sort_shelters(shelters, district, sort)),
+        district=district.strip(),
+        sort=sort if sort in ('name', 'recommendation', 'crowding') else '',
+    )
 
 
 @app.route('/board')
@@ -816,15 +907,19 @@ def announcement_register():
                 'id': next_instruction_id(), 'category': 'announcement', 'target': '住民',
                 'area': ','.join(selected_areas),
                 'warning_type': request.form.get('warning_type', '通常').strip() or '通常',
-                'content': request.form.get('content', ''), 'shelter': request.form.get('shelter', '').strip(),
-                'status': request.form.get('status', '未対応').strip() or '未対応',
+                'content': request.form.get('content', ''),
+                'status': (
+                    request.form.get('status', '発令').strip()
+                    if request.form.get('status', '').strip() in ANNOUNCEMENT_STATUSES
+                    else '発令'
+                ),
                 'created_at': now, 'updated_at': now,
             })
             save_instructions()
             message = '発信を登録しました。'
     return render_template(
         'announcement_register.html', areas=AREAS, warning_options=WARNING_OPTIONS,
-        shelters=shelters, message=message, error=error,
+        announcement_statuses=ANNOUNCEMENT_STATUSES, message=message, error=error,
     )
 
 
@@ -860,8 +955,14 @@ def instruction_register():
 # 検索結果ページ：templates/search_results.html を返す
 @app.route('/search_results')
 def search_results():
-    results = filter_shelters(request.args.get('district'))
-    return render_template('search_results.html', results=results)
+    district = request.args.get('district', '')
+    sort = request.args.get('sort', '')
+    return render_template(
+        'search_results.html',
+        results=prepare_shelters(filter_and_sort_shelters(shelters, district, sort)),
+        district=district.strip(),
+        sort=sort if sort in ('name', 'recommendation', 'crowding') else '',
+    )
 
 # JSON API：/shelters?district=地区名
 @app.route('/shelters', methods=['GET'])

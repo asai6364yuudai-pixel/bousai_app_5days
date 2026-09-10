@@ -1,8 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>{{ t('shelter_search') }}</h2>
+<h1>{{ t('shelter_search') }}</h1>
 <p>{{ t('search_description') }}</p>
 
-<p><a href="/all_shelters">{{ t('all_shelters') }}</a></p>
+<form method="get" action="{{ url_for('search_results') }}">
+	<label for="district">地区</label>
+	<select id="district" name="district">
+		<option value="">すべての地区</option>
+		{% for district in districts %}<option value="{{ district }}">{{ district }}</option>{% endfor %}
+	</select>
+	<button type="submit">検索</button>
+</form>
+<p><a href="{{ url_for('all_shelters') }}">{{ t('all_shelters') }}</a></p>
 {% endblock %}

@@ -13,8 +13,7 @@
     <div class="form-field"><label for="content">発信内容（任意）</label><textarea id="content" name="content"></textarea></div>
     <div class="form-field"><span>対象</span><p>住民</p></div>
     <div class="form-field"><label>対象区域</label><div class="check-grid">{% for area in areas %}<label><input type="checkbox" name="area" value="{{ area }}"> {{ area }}</label>{% endfor %}</div></div>
-    <div class="form-row"><div class="form-field"><label for="warning_type">警報・注意報</label><select id="warning_type" name="warning_type">{% for warning in warning_options %}<option value="{{ warning }}">{{ warning }}</option>{% endfor %}</select></div><div class="form-field"><label for="status">状態</label><select id="status" name="status"><option>未対応</option><option>対応中</option><option>完了</option></select></div></div>
-    <div class="form-field"><label for="shelter">避難先（任意）</label><select id="shelter" name="shelter"><option value="">指定なし</option>{% for shelter in shelters %}<option value="{{ shelter.get('name', '') }}">{{ shelter.get('name', '') }}</option>{% endfor %}</select></div>
+    <div class="form-row"><div class="form-field"><label for="warning_type">警報・注意報</label><select id="warning_type" name="warning_type">{% for warning in warning_options %}<option value="{{ warning }}">{{ warning }}</option>{% endfor %}</select></div><div class="form-field"><label for="status">状態</label><select id="status" name="status">{% for status in announcement_statuses %}<option value="{{ status }}">{{ status }}</option>{% endfor %}</select></div></div>
     <div class="actions"><button type="submit">発信を登録</button></div>
   </form>
 </div>

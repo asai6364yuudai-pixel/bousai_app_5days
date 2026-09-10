@@ -1,20 +1,110 @@
 {% extends "base.html" %}
 
-{% block content %}
-<h2>{{ t('search_results') }}</h2>
+{% block title %}避難所検索結果 - {{ t('app_name') }}{% endblock %}
 
-{% if results %}
-  <ul>
+{% block content %}
+<style>
+  .search-results { max-width: 960px; }
+  .search-results-header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
+  .search-results-header h1 { margin-bottom: 4px; }
+  .breadcrumb { margin: 0 0 18px; }
+  .result-controls { display: flex; align-items: end; gap: 8px; margin: 0 0 20px; }
+  .result-controls label { display: flex; flex-direction: column; gap: 4px; font-weight: 700; }
+  .result-controls select { min-height: 36px; padding: 5px 8px; }
+  .shelter-results { display: grid; gap: 16px; padding: 0; list-style: none; }
+  .shelter-result { border: 1px solid #d8e0e8; border-radius: 6px; padding: 16px; }
+  .shelter-result h2 { margin: 0 0 10px; font-size: 1.25rem; }
+  .shelter-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 6px 18px; margin: 0; }
+  .shelter-details div { display: grid; grid-template-columns: 7em 1fr; gap: 8px; }
+  .shelter-details dt { font-weight: 700; }
+  .shelter-details dd { margin: 0; overflow-wrap: anywhere; }
+  .shelter-map { width: 100%; height: 260px; margin-top: 14px; border: 1px solid #c7d1dc; }
+  .map-error { margin: 14px 0 0; color: #a22e2e; }
+  .result-links { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 24px; }
+  @media (max-width: 600px) {
+    .shelter-result { padding: 12px; }
+    .shelter-details div { grid-template-columns: 6em 1fr; }
+    .shelter-map { height: 220px; }
+  }
+</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<div class="search-results">
+  <p class="breadcrumb"><a href="{{ url_for('shelter_search') }}">避難所検索</a> &gt; <span>避難所検索結果表示</span></p>
+  <div class="search-results-header">
+    <h1>避難所検索結果</h1>
+    <form class="result-controls" method="get" action="{{ request.path }}">
+      <input type="hidden" name="district" value="{{ district }}">
+      <label for="sort">並び替え
+        <select id="sort" name="sort" onchange="this.form.submit()">
+          <option value=""{% if not sort %} selected{% endif %}>登録順</option>
+          <option value="name"{% if sort == 'name' %} selected{% endif %}>避難所名順</option>
+          <option value="recommendation"{% if sort == 'recommendation' %} selected{% endif %}>おすすめ度順</option>
+          <option value="crowding"{% if sort == 'crowding' %} selected{% endif %}>混雑が少ない順</option>
+        </select>
+      </label>
+    </form>
+  </div>
+
+  {% if results %}
+  <ul class="shelter-results">
     {% for shelter in results %}
-    <li>{{ shelter.name }}</li>
+    {% set address = (shelter.get('address') or '')|trim %}
+    <li class="shelter-result">
+      <h2>{{ shelter.get('name') or '未登録' }}</h2>
+      <dl class="shelter-details">
+        <div><dt>おすすめ度（距離）</dt><dd>{{ shelter.get('recommendation') or '未登録' }}</dd></div>
+        <div><dt>混雑状況</dt><dd>{{ shelter.get('occupancy_display') or shelter.get('crowding') or '未登録' }}</dd></div>
+        <div><dt>避難所までの時間</dt><dd>{{ shelter.get('travel_time') or '未登録' }}</dd></div>
+        <div><dt>TEL</dt><dd>{{ shelter.get('phone') or '未登録' }}</dd></div>
+        {% if address %}<div><dt>住所</dt><dd>{{ address }}</dd></div>{% endif %}
+      </dl>
+      {% if address %}<div class="shelter-map" data-address="{{ address }}" data-name="{{ shelter.get('name') or '未登録' }}" aria-label="{{ shelter.get('name') or '未登録' }}の地図"></div>{% endif %}
+    </li>
     {% endfor %}
   </ul>
-{% else %}
-  <p>{{ t('no_shelters') }}</p>
-{% endif %}
+  {% else %}
+  <p>該当する避難所が見つかりませんでした</p>
+  {% endif %}
 
-<p>
-  <a href="/shelter_search">{{ t('back_to_search') }}</a> |
-  <a href="/">{{ t('back_to_home') }}</a>
-</p>
+  <p class="result-links"><a href="{{ url_for('shelter_search') }}">検索画面に戻る</a><a href="{{ url_for('index') }}">トップページへ戻る</a></p>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(() => {
+  const errorMessage = '地図を表示できません';
+  const showError = (container) => {
+    container.textContent = errorMessage;
+    container.classList.add('map-error');
+  };
+
+  document.querySelectorAll('.shelter-map').forEach((container) => {
+    const address = container.dataset.address.trim();
+    if (!address || typeof L === 'undefined') {
+      showError(container);
+      return;
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const query = new URLSearchParams({ q: address, format: 'jsonv2', limit: '1', 'accept-language': 'ja' });
+    fetch(`https://nominatim.openstreetmap.org/search?${query.toString()}`, { signal: controller.signal })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error('geocoding failed')))
+      .then((locations) => {
+        const latitude = Number(locations?.[0]?.lat);
+        const longitude = Number(locations?.[0]?.lon);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+          throw new Error('invalid coordinates');
+        }
+        const map = L.map(container).setView([latitude, longitude], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+        L.marker([latitude, longitude]).addTo(map).bindPopup(container.dataset.name).openPopup();
+      })
+      .catch(() => showError(container))
+      .finally(() => clearTimeout(timeout));
+  });
+})();
+</script>
 {% endblock %}

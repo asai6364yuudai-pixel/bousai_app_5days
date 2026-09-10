@@ -34,5 +34,28 @@
     "status": "完了",
     "created_at": "2026年07月14日 18:22",
     "updated_at": "2026年07月14日 18:22"
+  },
+  {
+    "id": 5,
+    "category": "announcement",
+    "target": "住民",
+    "area": "本町",
+    "warning_type": "レベル2大雨注意報",
+    "content": "",
+    "shelter": "",
+    "status": "対応中",
+    "created_at": "2026年09月10日 15:07",
+    "updated_at": "2026年09月10日 15:07"
+  },
+  {
+    "id": 6,
+    "category": "announcement",
+    "target": "住民",
+    "area": "本町",
+    "warning_type": "レベル2大雨注意報",
+    "content": "",
+    "status": "解除",
+    "created_at": "2026年09月10日 15:19",
+    "updated_at": "2026年09月10日 15:19"
   }
 ]
