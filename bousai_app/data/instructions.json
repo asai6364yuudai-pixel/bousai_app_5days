@@ -57,5 +57,16 @@
     "status": "解除",
     "created_at": "2026年09月10日 15:19",
     "updated_at": "2026年09月10日 15:19"
+  },
+  {
+    "id": 7,
+    "category": "announcement",
+    "target": "住民",
+    "area": "本町",
+    "warning_type": "大雨警報",
+    "content": "避難勧告",
+    "status": "発令",
+    "created_at": "2026年09月10日 17:22",
+    "updated_at": "2026年09月10日 17:22"
   }
 ]
