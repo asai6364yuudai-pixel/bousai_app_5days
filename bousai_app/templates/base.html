@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="ja">
+<html lang="{{ language }}">
 <head>
   <meta charset="utf-8">
-  <title>{% block title %}防災アプリ{% endblock %}</title>
+  <title>{% block title %}{{ t('app_name') }}{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     .nav-button {
@@ -39,24 +39,67 @@
     .nav-logout {
       background: #bd4b48;
     }
+
+    .language-control {
+      margin-left: 4px;
+      white-space: nowrap;
+    }
+
+    .language-select {
+      border: 1px solid #b8c2ce;
+      border-radius: 4px;
+      padding: 5px 7px;
+      background: #ffffff;
+      color: #435466;
+      font: inherit;
+    }
+
+    .menu-button {
+      border: 0;
+      padding: 8px 10px;
+      background: transparent;
+      color: #435466;
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .site-header > nav {
+      display: none;
+    }
+
+    .site-header.menu-open > nav {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
   </style>
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <!-- ヘッダー -->
   <header class="site-header">
     <h1>{% block site_name %}防災アプリ{% endblock %}</h1>
-    <nav>
-      <a class="nav-button nav-home" href="/">ホーム</a>
-      <a class="nav-button nav-search" href="/shelter_search">避難所検索</a>
-      <a class="nav-button nav-register" href="/shelter_register">避難所登録</a>
-      <a class="nav-button nav-board" href="/board">指示・発信</a>
+    <button class="menu-button" type="button" aria-expanded="false" aria-controls="siteMenu" aria-label="メニューを開く">☰</button>
+    <nav id="siteMenu">
+      <a class="nav-button nav-home" href="/">{{ t('home') }}</a>
+      <a class="nav-button nav-search" href="/shelter_search">{{ t('shelter_search') }}</a>
+      <a class="nav-button nav-register" href="/shelter_register">{{ t('shelter_register') }}</a>
+      <a class="nav-button nav-board" href="/board">{{ t('board') }}</a>
       {% if session.logged_in %}
-        <span>ログイン中（{{ session.username }}）</span>
-        <a class="nav-button nav-logout" href="/logout">ログアウト</a>
+        <span>{{ t('logged_in') }}（{{ session.username }}）</span>
+        <a class="nav-button nav-logout" href="/logout">{{ t('logout') }}</a>
       {% else %}
-        <a class="nav-button nav-login" href="/login">ログイン</a>
+        <a class="nav-button nav-login" href="/login">{{ t('login') }}</a>
       {% endif %}
-      {% block language_control %}{% endblock %}
+      <form method="post" action="{{ url_for('set_language') }}" class="language-control">
+        <label for="languageSelect">{{ t('language') }}</label>
+        <select id="languageSelect" name="language" class="language-select" aria-label="{{ t('language') }}" onchange="this.form.submit()">
+          <option value="ja"{% if language == 'ja' %} selected{% endif %}>{{ t('japanese', 'ja') }}</option>
+          <option value="en"{% if language == 'en' %} selected{% endif %}>{{ t('english', 'en') }}</option>
+        </select>
+        <input type="hidden" name="next" value="{{ request.full_path }}">
+      </form>
     </nav>
   </header>
 
@@ -66,5 +109,16 @@
     <!-- ここに子テンプレートの content が入る -->
     {% block content %}{% endblock %}
   </main>
+  <script>
+    (() => {
+      const header = document.querySelector('.site-header');
+      const button = document.querySelector('.menu-button');
+      if (!header || !button) return;
+      button.addEventListener('click', () => {
+        const isOpen = header.classList.toggle('menu-open');
+        button.setAttribute('aria-expanded', String(isOpen));
+      });
+    })();
+  </script>
 </body>
 </html>

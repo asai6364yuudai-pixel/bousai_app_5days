@@ -1,23 +1,96 @@
 {% extends "base.html" %}
 
+{% block title %}{{ t('shelter_register') }} - {{ t('app_name') }}{% endblock %}
+
 {% block content %}
-<h2>避難所登録</h2>
-<p>新しい避難所情報を登録します。</p>
+<style>
+  .register-page { width: min(1080px, calc(100% - 32px)); margin: 28px auto 64px; color: #435466; }
+  .breadcrumb { margin: 0 0 22px; color: #66788b; font-size: 14px; }
+  .breadcrumb a { color: #2f5baa; font-weight: 700; }
+  .register-heading { margin: 0 0 8px; color: #2f5baa; font-size: 28px; }
+  .register-description { margin: 0 0 22px; }
+  .register-message { margin: 0 0 20px; padding: 13px 16px; border-left: 5px solid #2f5baa; background: #edf4fc; font-weight: 700; }
+  .register-message.error { border-left-color: #bd4b48; background: #fff1f0; color: #8f2926; }
+  .register-layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr); gap: 28px; align-items: start; }
+  .register-panel { min-width: 0; padding: 24px; border: 1px solid #e2e8ef; border-radius: 8px; background: #fff; box-shadow: 0 4px 14px rgba(41, 66, 102, 0.07); }
+  .register-panel h2 { margin: 0 0 20px; color: #2f5baa; font-size: 21px; }
+  .form-field { margin: 0 0 16px; }
+  .form-field label { display: block; margin-bottom: 6px; font-weight: 700; }
+  .form-field input { box-sizing: border-box; width: 100%; min-height: 42px; border: 1px solid #b8c2ce; border-radius: 4px; padding: 8px 10px; color: #263746; font: inherit; }
+  .form-field input:focus { outline: 3px solid #d7e6f8; border-color: #2f5baa; }
+  .register-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+  .register-actions button, .clear-selection { min-height: 42px; border: 0; border-radius: 5px; padding: 9px 16px; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+  .save-button { background: #2f5baa; }
+  .delete-button { background: #bd4b48; }
+  .list-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .list-heading h2 { margin-bottom: 0; }
+  .clear-selection { flex-shrink: 0; border: 1px solid #2f5baa; background: #fff; color: #2f5baa; font-size: 14px; }
+  .shelter-list { max-height: 380px; overflow-y: auto; margin: 20px 0 0; padding: 0; list-style: none; }
+  .shelter-list li + li { border-top: 1px solid #e8edf2; }
+  .shelter-option { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 4px; cursor: pointer; }
+  .shelter-option input { flex: 0 0 auto; }
+  @media (max-width: 720px) { .register-page { width: min(100% - 20px, 560px); margin-top: 20px; } .register-layout { grid-template-columns: 1fr; gap: 18px; } .register-panel { padding: 18px; } }
+</style>
 
-<!-- 成功・エラーメッセージ表示 -->
-{% if success %}
-  <p>{{ message }}</p>
-{% endif %}
+<div class="register-page">
+  <p class="breadcrumb"><a href="{{ url_for('index') }}">{{ t('home') }}</a> &gt; <span>{{ t('shelter_register') }}</span></p>
+  <h1 class="register-heading">{{ t('shelter_register') }}</h1>
+  <p class="register-description">{{ t('register_description') }}</p>
+  {% if message %}<p class="register-message{% if error %} error{% endif %}" role="alert">{{ message }}</p>{% endif %}
 
-{% if error %}
-  <p>{{ message }}</p>
-{% endif %}
+  <form method="post" id="shelterForm">
+    <input type="hidden" name="selected_id" id="selectedId" value="{{ selected_id }}">
+    <input type="hidden" name="confirmation" id="confirmation" value="{{ confirmation }}">
+    <div class="register-layout">
+      <section class="register-panel" aria-labelledby="form-heading">
+        <h2 id="form-heading">{{ t('shelter_register') }}</h2>
+        <div class="form-field"><label for="name">{{ t('shelter_name') }}</label><input type="text" id="name" name="name" value="{{ values.get('name', '') }}" required></div>
+        <div class="form-field"><label for="acceptedCount">受け入れ済み人数</label><input type="number" id="acceptedCount" name="accepted_count" value="{{ values.get('accepted_count', '') }}" min="0" step="1" inputmode="numeric"></div>
+        <div class="form-field"><label for="capacity">受け入れ可能人数</label><input type="number" id="capacity" name="capacity" value="{{ values.get('capacity', '') }}" min="0" step="1" inputmode="numeric"></div>
+        <div class="form-field"><label for="address">{{ t('address') }}</label><input type="text" id="address" name="address" value="{{ values.get('address', '') }}" required></div>
+        <div class="form-field"><label for="phone">電話番号</label><input type="tel" id="phone" name="phone" value="{{ values.get('phone', '') }}" inputmode="numeric" pattern="[0-9]*"></div>
+        <div class="register-actions"><button class="delete-button" type="submit" name="action" value="delete">削除</button><button class="save-button" type="submit" name="action" value="save">登録・更新</button></div>
+      </section>
 
-<form method="POST">
-  <p>
-    <label for="name">避難所名（必須）</label><br>
-    <input type="text" id="name" name="name">
-  </p>
-  <p><button type="submit">登録</button></p>
-</form>
+      <section class="register-panel" aria-labelledby="list-heading">
+        <div class="list-heading"><h2 id="list-heading">避難所一覧</h2><button class="clear-selection" type="button" id="clearSelection">選択解除</button></div>
+        {% if shelters %}
+          <ul class="shelter-list">
+            {% for shelter in shelters %}
+              <li><label class="shelter-option"><input type="radio" name="shelter_choice" value="{{ shelter.get('id', '') }}"{% if selected_id == shelter.get('id', '')|string %} checked{% endif %} data-name="{{ shelter.get('name', '') }}" data-accepted-count="{{ shelter.get('accepted_count', '') }}" data-capacity="{{ shelter.get('capacity', '') }}" data-address="{{ shelter.get('address', '') }}" data-phone="{{ shelter.get('phone', '') }}"><span>{{ shelter.get('name', '') }}</span></label></li>
+            {% endfor %}
+          </ul>
+        {% else %}<p>登録されている避難所はありません。</p>{% endif %}
+      </section>
+    </div>
+  </form>
+</div>
+
+<script>
+  (() => {
+    const form = document.getElementById('shelterForm');
+    const selectedId = document.getElementById('selectedId');
+    const confirmation = document.getElementById('confirmation');
+    const fields = { name: document.getElementById('name'), acceptedCount: document.getElementById('acceptedCount'), capacity: document.getElementById('capacity'), address: document.getElementById('address'), phone: document.getElementById('phone') };
+    document.querySelectorAll('input[name="shelter_choice"]').forEach((radio) => radio.addEventListener('change', () => {
+      selectedId.value = radio.value;
+      fields.name.value = radio.dataset.name || '';
+      fields.acceptedCount.value = radio.dataset.acceptedCount || '';
+      fields.capacity.value = radio.dataset.capacity || '';
+      fields.address.value = radio.dataset.address || '';
+      fields.phone.value = radio.dataset.phone || '';
+      confirmation.value = '';
+    }));
+    document.getElementById('clearSelection').addEventListener('click', () => {
+      const selected = document.querySelector('input[name="shelter_choice"]:checked');
+      if (!selected) return;
+      selected.checked = false;
+      selectedId.value = '';
+      Object.values(fields).forEach((field) => { field.value = ''; });
+      confirmation.value = '';
+    });
+    fields.phone.addEventListener('input', () => { fields.phone.value = fields.phone.value.replace(/\D/g, ''); });
+    form.addEventListener('input', (event) => { if (event.target !== confirmation) confirmation.value = ''; });
+  })();
+</script>
 {% endblock %}

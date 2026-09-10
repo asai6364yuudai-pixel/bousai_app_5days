@@ -1,25 +1,55 @@
 {% extends "base.html" %}
 
-{% block title %}指示・発信ボード - 防災アプリ{% endblock %}
+{% block title %}{{ t('board_title') }} - {{ t('app_name') }}{% endblock %}
 
 {% block content %}
-<h2>発信ボード</h2>
-<p>住民向けの発信を登録・確認できます。</p>
+<style>
+  .board-page, .register-page { width: min(1120px, calc(100% - 32px)); margin: 28px auto 64px; color: #435466; }
+  .board-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 28px; }
+  .board-actions a { padding: 11px 16px; border-radius: 5px; color: #fff; font-weight: 700; text-decoration: none; background: #2f5baa; }
+  .board-actions a:last-child { background: #239b4b; }
+  .board-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+  .board-panel { min-width: 0; padding: 22px; border: 1px solid #dfe6ee; border-radius: 8px; background: #fff; box-shadow: 0 4px 14px rgba(41,66,102,.07); }
+  .board-panel h3 { margin: 0 0 16px; color: #2f5baa; }
+  .filter-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .filter-form label { font-size: 13px; font-weight: 700; }
+  .filter-form select { box-sizing: border-box; width: 100%; min-height: 38px; margin-top: 5px; padding: 6px; border: 1px solid #b8c2ce; border-radius: 4px; background: #fff; font: inherit; }
+  .filter-actions { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; }
+  .filter-actions button { min-height: 38px; padding: 7px 14px; border: 0; border-radius: 4px; background: #2f5baa; color: #fff; font-weight: 700; cursor: pointer; }
+  .filter-actions a { color: #2f5baa; font-size: 14px; }
+  .board-list { display: grid; gap: 12px; }
+  .board-item { padding: 14px; border: 1px solid #e5eaf0; border-left: 4px solid #2f5baa; border-radius: 5px; background: #fbfcfe; }
+  .board-item.instruction { border-left-color: #239b4b; }
+  .board-item strong { display: block; margin-bottom: 8px; color: #263746; font-size: 16px; }
+  .board-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; color: #66788b; font-size: 13px; }
+  @media (max-width: 720px) { .board-page { width: min(100% - 20px, 560px); margin-top: 20px; } .board-grid { grid-template-columns: 1fr; } .board-panel { padding: 18px; } }
+</style>
 
-<!-- 発信一覧 -->
-<h3>発信一覧</h3>
-{% if instructions %}
-<table border="1" cellpadding="5">
-  <tr>
-    <th>内容</th>
-  </tr>
-  {% for inst in instructions %}
-  <tr>
-    <td>{{ inst.content }}{% if inst.shelter %}（避難先: {{ inst.shelter }}）{% endif %}</td>
-  </tr>
-  {% endfor %}
-</table>
-{% else %}
-<p>登録されている指示はありません。</p>
-{% endif %}
+<div class="board-page">
+  <h2>{{ t('board_title') }}</h2>
+  <p>{{ t('board_description') }}</p>
+  <div class="board-actions">
+    <a href="{{ url_for('announcement_register') }}">発信登録ページへ</a>
+    <a href="{{ url_for('instruction_register') }}">指示登録ページへ</a>
+  </div>
+  <div class="board-grid">
+    <section class="board-panel" aria-labelledby="announcement-heading">
+      <h3 id="announcement-heading">発信一覧</h3>
+      <form class="filter-form" method="get">
+        <label>地域<select name="area"><option value="">全地域</option>{% for area in areas %}<option value="{{ area }}"{% if area_filter == area %} selected{% endif %}>{{ area }}</option>{% endfor %}</select></label>
+        <label>警報種別<select name="warning_type"><option value="">全種類</option>{% for warning in warning_options %}<option value="{{ warning }}"{% if warning_filter == warning %} selected{% endif %}>{{ warning }}</option>{% endfor %}</select></label>
+        <div class="filter-actions"><button type="submit">絞り込む</button>{% if area_filter or warning_filter %}<a href="{{ url_for('board') }}">解除</a>{% endif %}</div>
+      </form>
+      <div class="board-list">
+        {% for item in announcements %}<article class="board-item"><strong>{{ item.content or '内容なし' }}</strong><p class="board-meta"><span>対象：{{ item.target or '住民' }}</span><span>対象区域：{{ item.area_display or '指定なし' }}</span><span>警報種別：{{ item.warning_type or '通常' }}</span><span>状態：{{ item.status or '未対応' }}</span></p>{% if item.shelter %}<p class="board-meta">避難先：{{ item.shelter }}</p>{% endif %}</article>{% else %}<p>登録されている発信はありません。</p>{% endfor %}
+      </div>
+    </section>
+    <section class="board-panel" aria-labelledby="instruction-heading">
+      <h3 id="instruction-heading">指示一覧</h3>
+      <div class="board-list">
+        {% for item in instructions %}<article class="board-item instruction"><strong>{{ item.content or '内容なし' }}</strong><p class="board-meta"><span>{{ item.source or '指示元未設定' }} → {{ item.target or '対象未設定' }}</span><span>日時：{{ item.updated_at or item.created_at or '日時不明' }}</span><span>状態：{{ item.status or '未対応' }}</span></p>{% if item.shelter %}<p class="board-meta">避難先：{{ item.shelter }}</p>{% endif %}</article>{% else %}<p>{{ t('no_instructions') }}</p>{% endfor %}
+      </div>
+    </section>
+  </div>
+</div>
 {% endblock %}

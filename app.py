@@ -1,9 +1,14 @@
 from flask import Flask, jsonify, request, render_template, session, redirect, url_for
 from urllib.parse import urlparse, urljoin
 from functools import wraps
+import hashlib
+import hmac
 import json
 import os
+import re
+import threading
 import urllib.request
+from urllib.parse import urlencode
 from datetime import datetime, timedelta, timezone
 
 # app.py はプロジェクト直下に置く。
@@ -17,6 +22,216 @@ app = Flask(
     static_folder=os.path.join(APP_DIR, 'static'),
 )
 app.secret_key = 'your-secret-key-here'
+
+SUPPORTED_LANGUAGES = ('ja', 'en')
+TRANSLATIONS = {
+    'ja': {
+        'app_name': '防災アプリ',
+        'home': 'ホーム',
+        'shelter_search': '避難所検索',
+        'shelter_register': '避難所登録',
+        'shelter_name': '避難所名',
+        'board': '指示・発信',
+        'login': 'ログイン',
+        'logout': 'ログアウト',
+        'logged_in': 'ログイン中',
+        'language': '言語選択',
+        'japanese': '日本語',
+        'english': 'English',
+        'contents': '目次',
+        'map': '避難所マップ',
+        'map_current_location': '現在地へ移動',
+        'map_show_all': '全避難所を表示',
+        'map_legend': '凡例',
+        'map_available': '受け入れ可・空き',
+        'map_somewhat_crowded': 'やや混雑',
+        'map_crowded': '混雑',
+        'map_unavailable': '受け入れ不可',
+        'map_location_failed': '現在地を取得できませんでした。',
+        'report_title': '災害の情報を報告する',
+        'report_intro': '身近で起きている災害の状況を入力してください。',
+        'disaster_type': '災害の種類',
+        'select_disaster_type': '災害の種類を選択してください',
+        'earthquake': '地震',
+        'flood': '洪水・浸水',
+        'landslide': '土砂災害',
+        'fire': '火災',
+        'strong_wind': '強風・突風',
+        'other': 'その他',
+        'other_detail': '災害の種類の詳細',
+        'other_detail_placeholder': '災害の種類を入力してください',
+        'location': '位置情報',
+        'location_placeholder': '住所や場所を入力してください',
+        'get_location': '現在地を取得',
+        'situation': '状況の説明',
+        'situation_placeholder': '被害の状況や周囲の様子を入力してください',
+        'send_report': '報告を送信する',
+        'weather_title': '青森市 気象警報・注意報',
+        'area_name': '青森市',
+        'auto_refresh': '10分おき自動更新',
+        'loading': '読み込み中...',
+        'notice_title': '指示・発信ボード',
+        'notice_source': '防災対策課が確認した情報のみ表示しています',
+        'last_update': '最終更新',
+        'unknown_time': '日時不明',
+        'shelter_destination': '避難先',
+        'status': '状態',
+        'notice_empty': '現在、住民向けの指示・発信はありません。',
+        'search_description': '登録されている避難所を確認できます。',
+        'all_shelters': '全施設一覧',
+        'search_results': '検索結果',
+        'no_shelters': '該当する避難所が見つかりませんでした',
+        'back_to_search': '検索画面に戻る',
+        'back_to_home': 'トップページへ戻る',
+        'register_description': '新しい避難所情報を登録します。',
+        'required': '必須',
+        'address': '住所',
+        'address_placeholder': '例：青森県青森市中央1-1-1',
+        'accepting': '受け入れ可否',
+        'accepting_yes': '受け入れ可',
+        'accepting_no': '受け入れ不可',
+        'congestion': '混雑度',
+        'empty': '空き',
+        'somewhat_crowded': 'やや混雑',
+        'crowded': '混雑',
+        'please_select': '選択してください',
+        'register': '登録',
+        'board_title': '発信ボード',
+        'board_description': '住民向けの発信を登録・確認できます。',
+        'announcement_list': '発信一覧',
+        'content': '内容',
+        'no_instructions': '登録されている指示はありません。',
+        'data_fetch': 'データ取得',
+        'jma_announcement': '気象庁発表',
+        'weather_fetch_failed': '気象情報の取得に失敗しました',
+        'no_warnings': '現在、警報・注意報は発表されていません',
+        'geolocation_unavailable': '現在地を取得できません。位置情報を入力してください。',
+        'getting_location': '現在地を取得しています...',
+        'location_entered': '現在地を入力しました。',
+        'report_sent': '報告を受け付けました',
+        'report_failed': '送信に失敗しました。時間をおいて再度お試しください。',
+        'report_required': '災害の種類、位置情報、状況を入力してください',
+        'other_detail_required': '災害の種類の詳細を入力してください',
+        'registration_complete': '登録完了しました。',
+        'deletion_complete': '避難所を削除しました。',
+        'delete_confirm': '選択中の避難所を削除します。もう一度「削除」を押すと確定します。',
+        'shelter_not_found': '対象の避難所が見つかりません。',
+        'phone_invalid': '電話番号は数字のみ入力してください。',
+        'count_invalid': '人数は0以上の整数で入力してください。',
+        'capacity_warning': '受け入れ済み人数が受け入れ可能人数を超えています。もう一度「登録・更新」を押すと、この内容で登録・更新できます。',
+        'name_required': '避難所名を入力してください',
+        'address_required': '住所を入力してください',
+        'accepting_required': '受け入れ可否を選択してください',
+        'congestion_required': '混雑度を選択してください',
+        'geocode_failed': '住所を地図上の位置に変換できませんでした。住所を確認して再度お試しください。',
+        'popup_address': '住所',
+        'popup_accepting': '受け入れ可否',
+        'popup_congestion': '混雑度',
+    },
+    'en': {
+        'app_name': 'Disaster Prevention App',
+        'home': 'Home',
+        'shelter_search': 'Shelter Search',
+        'shelter_register': 'Register Shelter',
+        'shelter_name': 'Shelter name',
+        'board': 'Announcements',
+        'login': 'Log in',
+        'logout': 'Log out',
+        'logged_in': 'Logged in',
+        'language': 'Language',
+        'japanese': '日本語',
+        'english': 'English',
+        'contents': 'Contents',
+        'map': 'Shelter Map',
+        'map_current_location': 'Go to my location',
+        'map_show_all': 'Show all shelters',
+        'map_legend': 'Legend',
+        'map_available': 'Available',
+        'map_somewhat_crowded': 'Somewhat crowded',
+        'map_crowded': 'Crowded',
+        'map_unavailable': 'Not accepting',
+        'map_location_failed': 'Could not get your location.',
+        'report_title': 'Report a Disaster',
+        'report_intro': 'Enter information about a disaster in your area.',
+        'disaster_type': 'Disaster type',
+        'select_disaster_type': 'Select a disaster type',
+        'earthquake': 'Earthquake',
+        'flood': 'Flooding',
+        'landslide': 'Landslide',
+        'fire': 'Fire',
+        'strong_wind': 'Strong wind',
+        'other': 'Other',
+        'other_detail': 'Disaster type details',
+        'other_detail_placeholder': 'Enter the disaster type',
+        'location': 'Location',
+        'location_placeholder': 'Enter an address or place',
+        'get_location': 'Get current location',
+        'situation': 'Situation description',
+        'situation_placeholder': 'Describe the damage and surroundings',
+        'send_report': 'Send report',
+        'weather_title': 'Aomori City Weather Warnings',
+        'area_name': 'Aomori City',
+        'auto_refresh': 'Refreshes every 10 minutes',
+        'loading': 'Loading...',
+        'notice_title': 'Announcements',
+        'notice_source': 'Only information confirmed by the disaster management office is shown.',
+        'last_update': 'Last updated',
+        'unknown_time': 'Unknown date',
+        'shelter_destination': 'Shelter',
+        'status': 'Status',
+        'notice_empty': 'There are no announcements for residents.',
+        'search_description': 'View registered shelters.',
+        'all_shelters': 'All shelters',
+        'search_results': 'Search results',
+        'no_shelters': 'No matching shelters were found.',
+        'back_to_search': 'Back to shelter search',
+        'back_to_home': 'Back to home',
+        'register_description': 'Register new shelter information.',
+        'required': 'required',
+        'address': 'Address',
+        'address_placeholder': 'Example: 1-1-1 Chuo, Aomori City, Aomori',
+        'accepting': 'Accepting evacuees',
+        'accepting_yes': 'Accepting',
+        'accepting_no': 'Not accepting',
+        'congestion': 'Crowding',
+        'empty': 'Available',
+        'somewhat_crowded': 'Somewhat crowded',
+        'crowded': 'Crowded',
+        'please_select': 'Please select',
+        'register': 'Register',
+        'board_title': 'Announcements',
+        'board_description': 'Register and review announcements for residents.',
+        'announcement_list': 'Announcement list',
+        'content': 'Content',
+        'no_instructions': 'There are no registered announcements.',
+        'data_fetch': 'Data retrieved',
+        'jma_announcement': 'JMA announcement',
+        'weather_fetch_failed': 'Failed to retrieve weather information.',
+        'no_warnings': 'There are currently no active warnings or advisories.',
+        'geolocation_unavailable': 'Could not get your location. Please enter it manually.',
+        'getting_location': 'Getting your location...',
+        'location_entered': 'Current location entered.',
+        'report_sent': 'Your report has been received.',
+        'report_failed': 'Failed to send. Please try again later.',
+        'report_required': 'Please enter the disaster type, location, and situation.',
+        'other_detail_required': 'Please enter details for the disaster type.',
+        'registration_complete': 'Registration completed.',
+        'deletion_complete': 'The shelter was deleted.',
+        'delete_confirm': 'This shelter will be deleted. Press "Delete" again to confirm.',
+        'shelter_not_found': 'The selected shelter was not found.',
+        'phone_invalid': 'Phone number must contain digits only.',
+        'count_invalid': 'Counts must be non-negative integers.',
+        'capacity_warning': 'Accepted people exceed capacity. Press "Register / Update" again to save these values.',
+        'name_required': 'Please enter a shelter name.',
+        'address_required': 'Please enter an address.',
+        'accepting_required': 'Please select whether the shelter is accepting evacuees.',
+        'congestion_required': 'Please select the crowding level.',
+        'geocode_failed': 'Could not convert the address to a map location. Check the address and try again.',
+        'popup_address': 'Address',
+        'popup_accepting': 'Accepting evacuees',
+        'popup_congestion': 'Crowding',
+    }
+}
 
 # 管理者認証情報
 ADMIN_CREDENTIALS = {
@@ -78,6 +293,25 @@ WARNING_CODES = {
     "49": "レベル4土砂災害危険警報"
 }
 
+AREAS = [
+    "青森市全域", "本町", "新町", "古川", "大野", "浅虫", "浪打",
+    "甲田", "田屋敷", "三内",
+]
+WARNING_OPTIONS = [
+    "通常", "レベル2大雨注意報", "大雨警報", "レベル3大雨警報",
+    "レベル4大雨危険警報", "レベル5大雨特別警報", "洪水注意報", "洪水警報",
+    "レベル2高潮注意報", "レベル3高潮警報", "レベル4高潮危険警報",
+    "レベル5高潮特別警報", "レベル2土砂災害注意報", "レベル3土砂災害警報",
+    "レベル4土砂災害危険警報", "レベル5土砂災害特別警報", "大雪注意報",
+    "大雪警報", "大雪特別警報", "風雪注意報", "暴風雪警報", "暴風雪特別警報",
+    "強風注意報", "暴風警報", "暴風特別警報", "波浪注意報", "波浪警報",
+    "波浪特別警報", "雷注意報", "融雪注意報", "濃霧注意報", "乾燥注意報",
+    "なだれ注意報", "低温注意報", "霜注意報", "着氷注意報", "着雪注意報",
+    "その他の注意報",
+]
+DEPARTMENTS = ["防災課", "道路管理課", "住民"]
+INSTRUCTION_STATUSES = ["未対応", "対応中", "完了"]
+
 # ────────────────────────────────
 # サンプルデータの読み込み
 DATA_FILE = os.path.join(APP_DIR, 'data', 'shelters.json')
@@ -93,8 +327,30 @@ def load_json(path, default):
         return default
 
 shelters = load_json(DATA_FILE, [])
+SHELTER_LOCK = threading.Lock()
 instructions = load_json(INSTRUCTIONS_FILE, [])
 disaster_reports = load_json(DISASTER_REPORTS_FILE, [])
+
+
+def get_language():
+    """セッションから現在の表示言語を取得する"""
+    language = session.get('language', 'ja')
+    return language if language in SUPPORTED_LANGUAGES else 'ja'
+
+
+def translate(key, language=None):
+    """現在の言語に対応する表示文言を返す"""
+    language = language or get_language()
+    return TRANSLATIONS[language].get(key, TRANSLATIONS['ja'].get(key, key))
+
+
+@app.context_processor
+def inject_language_context():
+    return {
+        'language': get_language(),
+        't': translate,
+        'translations': TRANSLATIONS[get_language()]
+    }
 
 def save_instructions():
     """指示ボードのデータをファイルに保存する"""
@@ -103,6 +359,103 @@ def save_instructions():
             json.dump(instructions, f, ensure_ascii=False, indent=2)
     except Exception:
         pass
+
+
+def next_instruction_id():
+    return max(
+        (int(item.get('id', 0)) for item in instructions
+         if str(item.get('id', '')).isdigit()),
+        default=0,
+    ) + 1
+
+
+def item_category(item):
+    """旧形式のレコードも発信・指示へ分類する"""
+    if item.get('category') in ('announcement', 'instruction'):
+        return item['category']
+    return 'announcement' if item.get('target') == '住民' else 'instruction'
+
+
+def display_area(area):
+    return str(area or '').replace(',', '、')
+
+
+def sort_shelters():
+    """避難所名の昇順をサーバー側で常に維持する"""
+    shelters.sort(key=lambda shelter: str(shelter.get('name', '')).casefold())
+
+
+def save_shelters():
+    """避難所を並び替えてからJSONへ保存する"""
+    sort_shelters()
+    temporary_file = f'{DATA_FILE}.tmp'
+    with open(temporary_file, 'w', encoding='utf-8') as file:
+        json.dump(shelters, file, ensure_ascii=False, indent=2)
+    os.replace(temporary_file, DATA_FILE)
+
+
+def shelter_form_values(form):
+    """登録画面のフォーム値を正規化する"""
+    return {
+        'name': form.get('name', '').strip(),
+        'accepted_count': form.get('accepted_count', '').strip(),
+        'capacity': form.get('capacity', '').strip(),
+        'address': form.get('address', '').strip(),
+        'phone': form.get('phone', '').strip(),
+    }
+
+
+def shelter_confirmation_token(values, selected_id=''):
+    """現在の入力値に結び付いたサーバー検証用トークンを作る"""
+    payload = json.dumps(
+        {'selected_id': str(selected_id), **values},
+        ensure_ascii=False,
+        sort_keys=True,
+    ).encode('utf-8')
+    return hmac.new(app.secret_key.encode('utf-8'), payload, hashlib.sha256).hexdigest()
+
+
+def valid_shelter_numbers(values):
+    """人数が空欄または0以上の整数かを検証する"""
+    return all(
+        not values[field] or re.fullmatch(r'\d+', values[field])
+        for field in ('accepted_count', 'capacity')
+    )
+
+
+def shelter_exceeds_capacity(values):
+    """両方が有効な数値のときだけ人数超過を判定する"""
+    if not values['accepted_count'] or not values['capacity']:
+        return False
+    return int(values['accepted_count']) > int(values['capacity'])
+
+
+sort_shelters()
+
+
+def geocode_address(address):
+    """Nominatimで住所を検索し、緯度・経度を返す"""
+    query = urlencode({
+        'q': address,
+        'format': 'jsonv2',
+        'limit': 1,
+        'accept-language': 'ja'
+    })
+    request = urllib.request.Request(
+        f'https://nominatim.openstreetmap.org/search?{query}',
+        headers={'User-Agent': 'bousai-app/1.0 (shelter-map)'}
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            results = json.loads(response.read().decode('utf-8'))
+        if not results:
+            return None
+        latitude = float(results[0]['lat'])
+        longitude = float(results[0]['lon'])
+        return {'latitude': latitude, 'longitude': longitude}
+    except (ValueError, KeyError, TypeError, json.JSONDecodeError,
+            urllib.error.URLError, urllib.error.HTTPError):
+        return None
 # ────────────────────────────────
 
 # ────────────────────────────────
@@ -122,6 +475,19 @@ def login_required(f):
             return redirect(url_for('login', next=request.url))
         return f(*args, **kwargs)
     return decorated_function
+
+
+@app.route('/set_language', methods=['POST'])
+def set_language():
+    """ヘッダーの言語選択をセッションに保存する"""
+    language = request.form.get('language', '')
+    if language in SUPPORTED_LANGUAGES:
+        session['language'] = language
+
+    next_url = request.form.get('next') or url_for('index')
+    if not is_safe_url(next_url):
+        next_url = url_for('index')
+    return redirect(next_url)
 
 def get_japan_time():
     """日本時間（JST）の現在時刻を取得する"""
@@ -247,7 +613,11 @@ def index():
         key=lambda instruction: instruction.get('updated_at', ''),
         reverse=True
     )
-    return render_template('index.html', resident_notices=resident_notices)
+    return render_template(
+        'index.html',
+        resident_notices=resident_notices,
+        shelters=shelters
+    )
 
 
 @app.route('/api/disaster_reports', methods=['POST'])
@@ -260,9 +630,9 @@ def create_disaster_report():
     situation = str(report.get('situation', '')).strip()
 
     if not disaster_type or not location or not situation:
-        return jsonify({'error': '災害の種類、位置情報、状況を入力してください'}), 400
+        return jsonify({'error': translate('report_required')}), 400
     if disaster_type == 'その他' and not other_detail:
-        return jsonify({'error': '災害の種類の詳細を入力してください'}), 400
+        return jsonify({'error': translate('other_detail_required')}), 400
 
     saved_report = {
         'timestamp': get_japan_time(),
@@ -275,7 +645,7 @@ def create_disaster_report():
     with open(DISASTER_REPORTS_FILE, 'w', encoding='utf-8') as f:
         json.dump(disaster_reports, f, ensure_ascii=False, indent=2)
 
-    return jsonify({'message': '報告を受け付けました'})
+    return jsonify({'message': translate('report_sent')})
 
 # ログインページ
 @app.route('/login', methods=['GET', 'POST'])
@@ -319,27 +689,77 @@ def logout():
 @app.route('/shelter_register', methods=['GET', 'POST'])
 @login_required
 def shelter_register():
-    if request.method == 'POST':
-        name = request.form.get('name', '').strip()
-        if not name:
-            return render_template(
-                'shelter_register.html',
-                error=True,
-                message='避難所名を入力してください'
-            )
+    values = shelter_form_values(request.form) if request.method == 'POST' else {
+        'name': '', 'accepted_count': '', 'capacity': '', 'address': '', 'phone': ''
+    }
+    selected_id = request.form.get('selected_id', '').strip()
+    action = request.form.get('action', 'save')
+    confirmation = request.form.get('confirmation', '')
 
-        next_id = max((shelter.get('id', 0) for shelter in shelters), default=0) + 1
-        shelters.append({'id': next_id, 'name': name})
-        with open(DATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump(shelters, f, ensure_ascii=False, indent=2)
-
+    def page(message='', error=False, confirmation='', selected_id=selected_id):
         return render_template(
             'shelter_register.html',
-            success=True,
-            message='登録完了しました。'
+            shelters=shelters,
+            values=values,
+            selected_id=selected_id,
+            message=message,
+            error=error,
+            confirmation=confirmation,
         )
 
-    return render_template('shelter_register.html')
+    if request.method == 'GET':
+        return page()
+
+    if action == 'delete':
+        if not selected_id:
+            return page()
+        token = shelter_confirmation_token(values, selected_id)
+        if not hmac.compare_digest(confirmation, token):
+            return page(translate('delete_confirm'), error=True, confirmation=token)
+        with SHELTER_LOCK:
+            original_count = len(shelters)
+            shelters[:] = [shelter for shelter in shelters if str(shelter.get('id')) != selected_id]
+            if len(shelters) == original_count:
+                return page(translate('shelter_not_found'), error=True)
+            save_shelters()
+        values = {'name': '', 'accepted_count': '', 'capacity': '', 'address': '', 'phone': ''}
+        return page(translate('deletion_complete'), selected_id='', confirmation='')
+
+    if not values['name']:
+        return page(translate('name_required'), error=True)
+    if not values['address']:
+        return page(translate('address_required'), error=True)
+    if values['phone'] and not re.fullmatch(r'\d+', values['phone']):
+        return page(translate('phone_invalid'), error=True)
+    if not valid_shelter_numbers(values):
+        return page(translate('count_invalid'), error=True)
+
+    expected_token = shelter_confirmation_token(values, selected_id)
+    if shelter_exceeds_capacity(values) and not hmac.compare_digest(confirmation, expected_token):
+        return page(translate('capacity_warning'), error=True, confirmation=expected_token)
+
+    with SHELTER_LOCK:
+        if selected_id:
+            shelter = next(
+                (item for item in shelters if str(item.get('id')) == selected_id),
+                None,
+            )
+            if shelter is None:
+                return page(translate('shelter_not_found'), error=True)
+        else:
+            next_id = max(
+                (int(shelter.get('id', 0)) for shelter in shelters
+                 if str(shelter.get('id', '')).isdigit()),
+                default=0,
+            ) + 1
+            shelter = {'id': next_id}
+            shelters.append(shelter)
+
+        shelter.update(values)
+        save_shelters()
+
+    values = {'name': '', 'accepted_count': '', 'capacity': '', 'address': '', 'phone': ''}
+    return page(translate('registration_complete'), selected_id='', confirmation='')
 
 # 避難所検索ページ
 @app.route('/shelter_search')
@@ -352,12 +772,90 @@ def all_shelters():
     return render_template('search_results.html', results=shelters)
 
 
-# 指示ボード：住民向けの指示を一覧で確認する
 @app.route('/board')
 @login_required
 def board():
-    resident_instructions = [i for i in instructions if i.get('target') == '住民']
-    return render_template('board.html', instructions=resident_instructions)
+    area_filter = request.args.get('area', '').strip()
+    warning_filter = request.args.get('warning_type', '').strip()
+    announcements = []
+    board_instructions = []
+    for item in instructions:
+        normalized = dict(item)
+        normalized['category'] = item_category(item)
+        normalized['area_display'] = display_area(item.get('area', ''))
+        if normalized['category'] == 'announcement':
+            if area_filter and area_filter not in str(item.get('area', '')).split(','):
+                continue
+            if warning_filter and item.get('warning_type', '') != warning_filter:
+                continue
+            announcements.append(normalized)
+        else:
+            board_instructions.append(normalized)
+    sort_key = lambda item: item.get('updated_at', item.get('created_at', ''))
+    announcements.sort(key=sort_key, reverse=True)
+    board_instructions.sort(key=sort_key, reverse=True)
+    return render_template(
+        'board.html', announcements=announcements, instructions=board_instructions,
+        areas=AREAS, warning_options=WARNING_OPTIONS,
+        area_filter=area_filter, warning_filter=warning_filter,
+    )
+
+
+@app.route('/announcement_register', methods=['GET', 'POST'])
+@login_required
+def announcement_register():
+    message = ''
+    error = ''
+    if request.method == 'POST':
+        selected_areas = [area for area in request.form.getlist('area') if area in AREAS]
+        if not selected_areas:
+            error = '対象区域を1つ以上選択してください。'
+        else:
+            now = get_japan_time()
+            instructions.append({
+                'id': next_instruction_id(), 'category': 'announcement', 'target': '住民',
+                'area': ','.join(selected_areas),
+                'warning_type': request.form.get('warning_type', '通常').strip() or '通常',
+                'content': request.form.get('content', ''), 'shelter': request.form.get('shelter', '').strip(),
+                'status': request.form.get('status', '未対応').strip() or '未対応',
+                'created_at': now, 'updated_at': now,
+            })
+            save_instructions()
+            message = '発信を登録しました。'
+    return render_template(
+        'announcement_register.html', areas=AREAS, warning_options=WARNING_OPTIONS,
+        shelters=shelters, message=message, error=error,
+    )
+
+
+@app.route('/instruction_register', methods=['GET', 'POST'])
+@login_required
+def instruction_register():
+    message = ''
+    error = ''
+    if request.method == 'POST':
+        source = request.form.get('source', '').strip()
+        target = request.form.get('target', '').strip()
+        content = request.form.get('content', '').strip()
+        if source not in DEPARTMENTS or target not in DEPARTMENTS:
+            error = '指示元部署と対象部署を選択してください。'
+        elif not content:
+            error = '指示内容を入力してください。'
+        else:
+            now = get_japan_time()
+            instructions.append({
+                'id': next_instruction_id(), 'category': 'instruction',
+                'source': source, 'target': target, 'content': content,
+                'shelter': request.form.get('shelter', '').strip(),
+                'status': request.form.get('status', '未対応').strip() or '未対応',
+                'created_at': now, 'updated_at': now,
+            })
+            save_instructions()
+            message = '指示を登録しました。'
+    return render_template(
+        'instruction_register.html', departments=DEPARTMENTS,
+        statuses=INSTRUCTION_STATUSES, shelters=shelters, message=message, error=error,
+    )
 
 # 検索結果ページ：templates/search_results.html を返す
 @app.route('/search_results')

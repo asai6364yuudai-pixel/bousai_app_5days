@@ -1,14 +1,7 @@
 {% extends "base.html" %}
 
 {% block body_class %}home-page{% endblock %}
-{% block site_name %}防災アプリ{% endblock %}
-{% block language_control %}
-<label class="language-control" for="languageSelect">言語選択</label>
-<select id="languageSelect" class="language-select" aria-label="言語選択">
-    <option>日本語</option>
-    <option>English</option>
-</select>
-{% endblock %}
+{% block site_name %}{{ t('app_name') }}{% endblock %}
 
 {% block content %}
 <style>
@@ -114,6 +107,51 @@
         align-items: start;
     }
 
+    .home-page .home-toc {
+        display: block;
+        margin-bottom: 28px;
+        padding: 18px 22px;
+        border: 1px solid #f0f2f6;
+        border-radius: 11px;
+        background: #f7f8fa;
+    }
+
+    .home-page .home-toc h2 {
+        margin-bottom: 12px;
+        font-size: 19px;
+    }
+
+    .home-page .home-toc-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .home-page .home-toc-list a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--home-blue);
+        font-size: 15px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .home-page .home-toc-list a:hover,
+    .home-page .home-toc-list a:focus-visible {
+        background: #e4edf8;
+    }
+
+    .home-page section[id] {
+        scroll-margin-top: 16px;
+    }
+
     .home-page .map-card {
         grid-area: map;
     }
@@ -157,6 +195,96 @@
         height: 364px;
         overflow: hidden;
         border-radius: 11px;
+    }
+
+    .home-page .map-tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+    }
+
+    .home-page .map-tool-button {
+        min-height: 44px;
+        border: 1px solid #b8c2ce;
+        border-radius: 6px;
+        padding: 8px 12px;
+        background: #ffffff;
+        color: var(--home-blue);
+        font: inherit;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .home-page .map-tool-button:hover,
+    .home-page .map-tool-button:focus-visible {
+        background: #e4edf8;
+    }
+
+    .home-page .map-message {
+        min-height: 20px;
+        margin: 8px 0 0;
+        color: #c0392b;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .home-page .map-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 16px;
+        margin: 12px 0 0;
+        color: #506174;
+        font-size: 14px;
+    }
+
+    .home-page .map-legend-title {
+        width: 100%;
+        margin: 0;
+        font-weight: 700;
+    }
+
+    .home-page .map-legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .home-page .map-legend-dot,
+    .home-page .shelter-marker {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    }
+
+    .home-page .leaflet-popup-content {
+        margin: 14px 16px;
+        font-size: 16px;
+        line-height: 1.7;
+    }
+
+    .home-page .shelter-marker {
+        box-sizing: border-box;
+        width: 24px;
+        height: 24px;
+        border-width: 3px;
+    }
+
+    .home-page .marker-available {
+        background: #239b4b;
+    }
+
+    .home-page .marker-somewhat-crowded {
+        background: #d99a16;
+    }
+
+    .home-page .marker-crowded,
+    .home-page .marker-unavailable {
+        background: #c0392b;
     }
 
     .home-page .weather-heading {
@@ -466,7 +594,26 @@
         }
 
         .home-page #shelterMap {
-            height: 280px;
+            height: 340px;
+        }
+
+        .home-page .home-toc-list {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .home-page .home-toc-list li {
+            flex: 0 0 auto;
+        }
+
+        .home-page .map-tools {
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        .home-page .map-tool-button {
+            width: 100%;
         }
 
         .home-page .notice-item-header {
@@ -486,80 +633,106 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
+<nav class="home-toc" aria-label="{{ t('contents') }}">
+    <h2>{{ t('contents') }}</h2>
+    <ul class="home-toc-list">
+        <li><a href="#shelter-map">{{ t('map') }}</a></li>
+        <li><a href="#disaster-report">{{ t('report_title') }}</a></li>
+        <li><a href="#weather-warnings">{{ t('weather_title') }}</a></li>
+        <li><a href="#resident-notices">{{ t('notice_title') }}</a></li>
+    </ul>
+</nav>
+
 <div class="home-layout">
-<section class="home-card map-card">
-    <h2><i class="fa-solid fa-location-dot section-icon" aria-hidden="true"></i>避難所マップ</h2>
+<section id="shelter-map" class="home-card map-card">
+    <h2><i class="fa-solid fa-location-dot section-icon" aria-hidden="true"></i>{{ t('map') }}</h2>
     <div id="shelterMap"></div>
+    <div class="map-tools">
+        <button id="currentLocationButton" class="map-tool-button" type="button">
+            <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i> {{ t('map_current_location') }}
+        </button>
+        <button id="showAllSheltersButton" class="map-tool-button" type="button">
+            <i class="fa-solid fa-expand" aria-hidden="true"></i> {{ t('map_show_all') }}
+        </button>
+    </div>
+    <p id="mapMessage" class="map-message" role="status" aria-live="polite"></p>
+    <div class="map-legend" aria-label="{{ t('map_legend') }}">
+        <p class="map-legend-title">{{ t('map_legend') }}</p>
+        <span class="map-legend-item"><span class="map-legend-dot marker-available" aria-hidden="true"></span>{{ t('map_available') }}</span>
+        <span class="map-legend-item"><span class="map-legend-dot marker-somewhat-crowded" aria-hidden="true"></span>{{ t('map_somewhat_crowded') }}</span>
+        <span class="map-legend-item"><span class="map-legend-dot marker-crowded" aria-hidden="true"></span>{{ t('map_crowded') }}</span>
+        <span class="map-legend-item"><span class="map-legend-dot marker-unavailable" aria-hidden="true"></span>{{ t('map_unavailable') }}</span>
+    </div>
 </section>
 
-<section class="home-card report-form-card">
-    <h2><i class="fa-solid fa-triangle-exclamation section-icon" aria-hidden="true"></i>災害の情報を報告する</h2>
-    <p class="report-intro">身近で起きている災害の状況を入力してください。</p>
+<section id="disaster-report" class="home-card report-form-card">
+    <h2><i class="fa-solid fa-triangle-exclamation section-icon" aria-hidden="true"></i>{{ t('report_title') }}</h2>
+    <p class="report-intro">{{ t('report_intro') }}</p>
     <form id="disasterReportForm" class="report-form">
         <div class="report-field">
-            <label for="disasterType">災害の種類</label>
+            <label for="disasterType">{{ t('disaster_type') }}</label>
             <select id="disasterType" name="disaster_type" required>
-                <option value="">災害の種類を選択してください</option>
-                <option value="地震">地震</option>
-                <option value="洪水・浸水">洪水・浸水</option>
-                <option value="土砂災害">土砂災害</option>
-                <option value="火災">火災</option>
-                <option value="強風・突風">強風・突風</option>
-                <option value="その他">その他</option>
+                <option value="">{{ t('select_disaster_type') }}</option>
+                <option value="地震">{{ t('earthquake') }}</option>
+                <option value="洪水・浸水">{{ t('flood') }}</option>
+                <option value="土砂災害">{{ t('landslide') }}</option>
+                <option value="火災">{{ t('fire') }}</option>
+                <option value="強風・突風">{{ t('strong_wind') }}</option>
+                <option value="その他">{{ t('other') }}</option>
             </select>
         </div>
         <div id="otherDetailField" class="report-field other-detail-field" hidden>
-            <label for="otherDetail">災害の種類の詳細</label>
-            <input id="otherDetail" name="other_detail" type="text" placeholder="災害の種類を入力してください">
+            <label for="otherDetail">{{ t('other_detail') }}</label>
+            <input id="otherDetail" name="other_detail" type="text" placeholder="{{ t('other_detail_placeholder') }}">
         </div>
         <div class="report-field">
-            <label for="reportLocation">位置情報</label>
+            <label for="reportLocation">{{ t('location') }}</label>
             <div class="location-row">
-                <input id="reportLocation" name="location" type="text" placeholder="住所や場所を入力してください" required>
-                <button id="getLocationButton" class="location-button" type="button"><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i> 現在地を取得</button>
+                <input id="reportLocation" name="location" type="text" placeholder="{{ t('location_placeholder') }}" required>
+                <button id="getLocationButton" class="location-button" type="button"><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i> {{ t('get_location') }}</button>
             </div>
         </div>
         <div class="report-field">
-            <label for="reportSituation">状況の説明</label>
-            <textarea id="reportSituation" name="situation" placeholder="被害の状況や周囲の様子を入力してください" required></textarea>
+            <label for="reportSituation">{{ t('situation') }}</label>
+            <textarea id="reportSituation" name="situation" placeholder="{{ t('situation_placeholder') }}" required></textarea>
         </div>
-        <button class="report-submit" type="submit"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> 報告を送信する</button>
+        <button class="report-submit" type="submit"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> {{ t('send_report') }}</button>
         <p id="reportMessage" class="report-message" role="status" aria-live="polite"></p>
     </form>
 </section>
 
-<section class="home-card weather-card">
+<section id="weather-warnings" class="home-card weather-card">
     <div class="weather-heading">
-        <h2><i class="fa-solid fa-cloud-sun section-icon weather-icon" aria-hidden="true"></i>青森市 気象警報・注意報</h2>
-        <span class="refresh-label"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>10分おき自動更新</span>
+        <h2><i class="fa-solid fa-cloud-sun section-icon weather-icon" aria-hidden="true"></i>{{ t('weather_title') }}</h2>
+        <span class="refresh-label"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>{{ t('auto_refresh') }}</span>
     </div>
     <div id="weatherContent" class="weather-panel">
-        <p>読み込み中...</p>
+        <p>{{ t('loading') }}</p>
     </div>
 </section>
 
-<section class="home-card notice-card">
-    <h2><i class="fa-solid fa-bullhorn section-icon" aria-hidden="true"></i>指示・発信ボード</h2>
-    <p class="notice-source"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>防災対策課が確認した情報のみ表示しています</p>
+<section id="resident-notices" class="home-card notice-card">
+    <h2><i class="fa-solid fa-bullhorn section-icon" aria-hidden="true"></i>{{ t('notice_title') }}</h2>
+    <p class="notice-source"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>{{ t('notice_source') }}</p>
     {% if resident_notices %}
     <div class="notice-list">
         {% for notice in resident_notices %}
         <article class="notice-item">
             <div class="notice-item-header">
                 <p class="notice-content">{{ notice.content }}</p>
-                <time class="notice-updated" datetime="{{ notice.updated_at or notice.created_at }}">最終更新：{{ notice.updated_at or notice.created_at or '日時不明' }}</time>
+                <time class="notice-updated" datetime="{{ notice.updated_at or notice.created_at }}">{{ t('last_update') }}: {{ notice.updated_at or notice.created_at or t('unknown_time') }}</time>
             </div>
             {% if notice.shelter %}
-            <p class="notice-shelter"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> 避難先：{{ notice.shelter }}</p>
+            <p class="notice-shelter"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ t('shelter_destination') }}: {{ notice.shelter }}</p>
             {% endif %}
             {% if notice.status %}
-            <p class="notice-status">状態：{{ notice.status }}</p>
+            <p class="notice-status">{{ t('status') }}: {{ notice.status }}</p>
             {% endif %}
         </article>
         {% endfor %}
     </div>
     {% else %}
-    <p class="notice-empty">現在、住民向けの指示・発信はありません。</p>
+    <p class="notice-empty">{{ t('notice_empty') }}</p>
     {% endif %}
 </section>
 </div>
@@ -577,6 +750,116 @@ document.addEventListener('DOMContentLoaded', function() {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
+
+    const shelters = {{ shelters|tojson }};
+    const translations = {{ translations|tojson }};
+    const mappedShelters = shelters.filter(shelter =>
+        Number.isFinite(Number(shelter.latitude)) &&
+        Number.isFinite(Number(shelter.longitude))
+    );
+
+    function escapeHtml(value) {
+        return String(value || '').replace(/[&<>'"]/g, function(character) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[character];
+        });
+    }
+
+    function translateShelterValue(value, labels) {
+        return labels[value] || value || '';
+    }
+
+    const acceptingLabels = {
+        '受け入れ可': translations.accepting_yes,
+        '受け入れ不可': translations.accepting_no
+    };
+    const congestionLabels = {
+        '空き': translations.empty,
+        'やや混雑': translations.somewhat_crowded,
+        '混雑': translations.crowded
+    };
+
+    function getShelterMarkerClass(shelter) {
+        if (shelter.accepting !== '受け入れ可') {
+            return 'marker-unavailable';
+        }
+        if (shelter.congestion === '混雑') {
+            return 'marker-crowded';
+        }
+        if (shelter.congestion === 'やや混雑') {
+            return 'marker-somewhat-crowded';
+        }
+        return 'marker-available';
+    }
+
+    function showAllShelters() {
+        if (mappedShelters.length === 0) {
+            return;
+        }
+        map.fitBounds(
+            mappedShelters.map(shelter => [
+                Number(shelter.latitude),
+                Number(shelter.longitude)
+            ]),
+            {padding: [24, 24], maxZoom: 15}
+        );
+    }
+
+    mappedShelters.forEach(function(shelter) {
+        const marker = L.marker([
+            Number(shelter.latitude),
+            Number(shelter.longitude)
+        ], {
+            icon: L.divIcon({
+                className: `shelter-marker ${getShelterMarkerClass(shelter)}`,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12],
+                popupAnchor: [0, -12]
+            })
+        }).addTo(map);
+        marker.bindPopup(`
+            <strong>${escapeHtml(shelter.name)}</strong><br>
+            ${escapeHtml(translations.popup_address)}: ${escapeHtml(shelter.address)}<br>
+            ${escapeHtml(translations.popup_accepting)}: ${escapeHtml(translateShelterValue(shelter.accepting, acceptingLabels))}<br>
+            ${escapeHtml(translations.popup_congestion)}: ${escapeHtml(translateShelterValue(shelter.congestion, congestionLabels))}
+        `);
+    });
+
+    showAllShelters();
+
+    let currentLocationMarker;
+    const mapMessage = document.getElementById('mapMessage');
+    document.getElementById('showAllSheltersButton').addEventListener('click', showAllShelters);
+    document.getElementById('currentLocationButton').addEventListener('click', function() {
+        if (!navigator.geolocation) {
+            mapMessage.textContent = translations.map_location_failed;
+            return;
+        }
+
+        mapMessage.textContent = '';
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const location = [position.coords.latitude, position.coords.longitude];
+            map.setView(location, 15);
+            if (currentLocationMarker) {
+                currentLocationMarker.setLatLng(location);
+            } else {
+                currentLocationMarker = L.circleMarker(location, {
+                    radius: 8,
+                    color: '#2f5baa',
+                    weight: 3,
+                    fillColor: '#ffffff',
+                    fillOpacity: 1
+                }).addTo(map);
+            }
+        }, function() {
+            mapMessage.textContent = translations.map_location_failed;
+        });
+    });
 
     const reportForm = document.getElementById('disasterReportForm');
     const disasterType = document.getElementById('disasterType');
@@ -596,19 +879,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('getLocationButton').addEventListener('click', function() {
         if (!navigator.geolocation) {
-            reportMessage.textContent = '現在地を取得できません。位置情報を入力してください。';
+            reportMessage.textContent = translations.geolocation_unavailable;
             reportMessage.className = 'report-message error';
             return;
         }
 
-        reportMessage.textContent = '現在地を取得しています...';
+        reportMessage.textContent = translations.getting_location;
         reportMessage.className = 'report-message';
         navigator.geolocation.getCurrentPosition(function(position) {
             reportLocation.value = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
-            reportMessage.textContent = '現在地を入力しました。';
+            reportMessage.textContent = translations.location_entered;
             reportMessage.className = 'report-message success';
         }, function() {
-            reportMessage.textContent = '現在地を取得できません。位置情報を入力してください。';
+            reportMessage.textContent = translations.geolocation_unavailable;
             reportMessage.className = 'report-message error';
         });
     });
@@ -639,7 +922,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(function() {
-                reportMessage.textContent = '送信に失敗しました。時間をおいて再度お試しください。';
+                reportMessage.textContent = translations.report_failed;
                 reportMessage.className = 'report-message error';
             });
     });
@@ -661,7 +944,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const weatherContent = document.getElementById('weatherContent');
 
         if (data.error) {
-            weatherContent.innerHTML = '<p>気象情報の取得に失敗しました</p>';
+            weatherContent.innerHTML = `<p>${translations.weather_fetch_failed}</p>`;
             return;
         }
 
@@ -673,14 +956,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             warningsHtml += '</ul>';
         } else {
-            warningsHtml = '<p class="weather-status"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>現在、警報・注意報は発表されていません</p>';
+            warningsHtml = `<p class="weather-status"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${translations.no_warnings}</p>`;
         }
 
         weatherContent.innerHTML = `
-            <p class="weather-location"><i class="fa-solid fa-location-dot" aria-hidden="true"></i>${data.area_name || '青森市'}</p>
+            <p class="weather-location"><i class="fa-solid fa-location-dot" aria-hidden="true"></i>${translations.area_name}</p>
             ${warningsHtml}
-            <p class="weather-meta"><span class="meta-icon"><i class="fa-regular fa-clock" aria-hidden="true"></i></span>データ取得: <span id="lastFetchTime">${data.last_fetch_time || '更新中...'}</span></p>
-            <p class="weather-meta"><span class="meta-icon"><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i></span>気象庁発表: ${data.report_time || '不明'}</p>
+            <p class="weather-meta"><span class="meta-icon"><i class="fa-regular fa-clock" aria-hidden="true"></i></span>${translations.data_fetch}: <span id="lastFetchTime">${data.last_fetch_time || translations.loading}</span></p>
+            <p class="weather-meta"><span class="meta-icon"><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i></span>${translations.jma_announcement}: ${data.report_time || 'N/A'}</p>
         `;
     }
 

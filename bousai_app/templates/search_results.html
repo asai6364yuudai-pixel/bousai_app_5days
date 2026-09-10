@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>検索結果</h2>
+<h2>{{ t('search_results') }}</h2>
 
 {% if results %}
   <ul>
@@ -10,11 +10,11 @@
     {% endfor %}
   </ul>
 {% else %}
-  <p>該当する避難所が見つかりませんでした</p>
+  <p>{{ t('no_shelters') }}</p>
 {% endif %}
 
 <p>
-  <a href="/shelter_search">検索画面に戻る</a> |
-  <a href="/">トップページへ戻る</a>
+  <a href="/shelter_search">{{ t('back_to_search') }}</a> |
+  <a href="/">{{ t('back_to_home') }}</a>
 </p>
 {% endblock %}

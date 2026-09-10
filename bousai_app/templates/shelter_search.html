@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>避難所検索</h2>
-<p>登録されている避難所を確認できます。</p>
+<h2>{{ t('shelter_search') }}</h2>
+<p>{{ t('search_description') }}</p>
 
-<p><a href="/all_shelters">全施設一覧</a></p>
+<p><a href="/all_shelters">{{ t('all_shelters') }}</a></p>
 {% endblock %}
